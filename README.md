@@ -1,1 +1,1 @@
-# Saltworks Setup
+# Saltminer Setup
