@@ -1,1 +1,1 @@
-# saltworks-setup
+# Saltworks Setup
