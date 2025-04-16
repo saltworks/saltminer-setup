@@ -16,12 +16,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           mkdir output
-          cp . output/
+          cp .env output/
           cp -r config output/
-          rm output/README.md
-          rm -rf output/.git
-          rm -rf output/.github
-          rm output/.gitignore
+          cp docker-compose.yml output/
+          cp nginx.conf output/
+          cp paths-cloud.sh output/
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.6.2
         with:
