@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           mkdir output
-          cp * output/
+          cp . output/
           cp -r config output/
           rm output/README.md
           rm -rf output/.git
