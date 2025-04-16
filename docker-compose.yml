@@ -134,7 +134,7 @@ services:
         condition: service_healthy
 
   elastic-agent:
-    image: docker.elastic.co/beats/elastic-agent:${STACK_VERSION}
+    image: docker.elastic.co/elastic-agent/elastic-agent:${STACK_VERSION}
     container_name: elastic-agent
     hostname: ${ELASTIC_AGENT_HOSTNAME}
     restart: always
