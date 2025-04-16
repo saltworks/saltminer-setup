@@ -14,11 +14,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          mkdir output
+          cp * output
+          rm output/README.md
+          rm -rf output/.git
+          rm -rf output/.github
+          rm output/.gitignore
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.6.2
         with:
           name: saltminer-setup-${{ github.ref_name }}
-          path: .
+          path: ./output
           retention-days: 30
           # Needed for .env file
           include-hidden-files: true
