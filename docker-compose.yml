@@ -1,0 +1,197 @@
+services:
+  smpgui:
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_PENTEST_IMAGE_VERSION}
+    container_name: smpgui
+    volumes:
+      - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "no"
+    init: true
+    depends_on:
+      ui-api:
+        condition: service_healthy
+        
+  proxy:
+    image: nginx:1.23.3-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: /etc/saltworks/saltminer/nginx/nginx.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+      - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "always"
+    depends_on:
+      ui-api:
+        condition: service_healthy
+
+  api:
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_API_IMAGE_VERSION}
+    container_name: api
+    expose:
+      - "5000"
+    volumes:
+      - type: bind
+        source: /etc/saltworks/saltminer/api/appsettings.json
+        target: /etc/saltworks/saltminer-3.0.0/api/appsettings.json
+      - api-logs:/var/log/saltworks/saltminer-3.0.0
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "always"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:5000/utility/version | grep -q '\"success\":true'",
+        ]
+      start_period: 300s
+    secrets:
+      - sm-license
+    entrypoint: []
+    command:
+        - sh
+        - -c
+        - |
+          if [ -f /run/secrets/sm-license ]; then
+            echo "SaltMiner license present."
+            cp /run/secrets/sm-license /usr/share/saltworks/saltminer-3.0.0/api/license.txt
+          fi;
+          /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
+
+  ui-api:
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
+    container_name: ui-api
+    hostname: ui-api
+    expose:
+      - "5001"
+    volumes:
+      - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
+      - ui-api-logs:/var/log/saltworks/saltminer-3.0.0
+      - type: bind
+        source: /etc/saltworks/saltminer/ui-api/appsettings.json
+        target: /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "always"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:5001/auth/cookie | grep -q '\"success\":true'",
+        ]
+      start_period: 300s
+    depends_on:
+      api:
+        condition: service_healthy
+
+  sm-services:
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
+    container_name: services
+    hostname: services
+    volumes:
+      - type: bind
+        source: /etc/saltworks/saltminer/agent/SourceConfigs
+        target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
+      - type: bind
+        source: /etc/saltworks/saltminer/python/Elastic.json
+        target: /etc/saltworks/saltminer-2.5.0/Elastic.json
+      - type: bind
+        source: /etc/saltworks/saltminer/python/Sources
+        target: /etc/saltworks/saltminer-2.5.0/Sources
+      - sm25:/usr/share/saltworks/saltminer-2.5.0/Custom
+      - services-logs:/var/log/saltworks/saltminer-3.0.0
+      - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "always"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  jobmanager:
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_JOBMANAGER_IMAGE_VERSION}
+    container_name: jobmanager
+    hostname: jobmanager
+    volumes:
+      - type: bind
+        source: /etc/saltworks/saltminer/jobmanager/JobManagerSettings.json
+        target: /etc/saltworks/saltminer-3.0.0/jobmanager/JobManagerSettings.json
+      - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
+      - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0
+    networks:
+      - ${CONTAINER_NETWORK}
+    restart: "always"
+    depends_on:
+      api:
+        condition: service_healthy
+      ui-api:
+        condition: service_healthy
+
+  elastic-agent:
+    image: docker.elastic.co/beats/elastic-agent:${STACK_VERSION}
+    container_name: elastic-agent
+    hostname: ${ELASTIC_AGENT_HOSTNAME}
+    restart: always
+    user: root # note, synthetic browser monitors require this set to `elastic-agent`
+    volumes:
+      - services-logs:/var/log/saltworks/saltminer-3.0.0/services
+      - api-logs:/var/log/saltworks/saltminer-3.0.0/api
+      - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0/jobmanager
+      - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+      - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
+    environment:
+      - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
+      - FLEET_ENROLL=1
+      - FLEET_URL=${FLEET_SERVER_URL}
+      - FLEET_INSECURE=0
+    networks:
+      - ${CONTAINER_NETWORK}
+    deploy:
+      resources:
+        limits:
+          memory: 1gb
+        reservations:
+          memory: 500mb
+    depends_on:
+      api:
+        condition: service_healthy
+      ui-api:
+        condition: service_healthy
+      sm-services:
+        condition: service_started
+      jobmanager:
+        condition: service_started
+    profiles:
+      - fleet
+
+volumes:
+  agent25-logs:
+    driver: local
+  api-logs:
+    driver: local
+  jobmanager-logs:
+    driver: local
+  services-logs:
+    driver: local
+  smpgui-assets:
+    driver: local
+  sm25:
+    driver: local
+  ui-api-logs:
+    driver: local
+  ui-files:
+    driver: local
+
+networks:
+  saltminer:
+    driver: bridge
+
+secrets:
+  sm-license:
+    file: ./license.txt
