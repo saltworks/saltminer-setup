@@ -1,0 +1,19 @@
+name: Fleet Config
+
+on:
+  push:
+    branches:
+    - '3.*'
+    paths:
+    - '.github/workflows/fleet-config.yml'
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+
