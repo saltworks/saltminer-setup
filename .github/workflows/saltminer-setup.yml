@@ -6,6 +6,8 @@ on:
     branches:
     - main
     - '3.*'
+    paths-ignore:
+    - '.github/workflows/fleet-config.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
