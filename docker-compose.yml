@@ -23,6 +23,15 @@ services:
         source: /etc/saltworks/saltminer/nginx/nginx.conf
         target: /etc/nginx/nginx.conf
         read_only: true
+      - type: bind
+        source: /etc/saltworks/saltminer/nginx/saltminer.crt
+        target: /etc/nginx/saltminer.crt
+        read_only: true
+      - type: bind
+        source: /etc/saltworks/saltminer/nginx/saltminer.key
+        target: /etc/nginx/saltminer.key
+        read_only: true
+        
       - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
     networks:
       - ${CONTAINER_NETWORK}
