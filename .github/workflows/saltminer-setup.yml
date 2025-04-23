@@ -23,6 +23,8 @@ jobs:
           cp docker-compose.yml output/
           cp nginx.conf output/
           cp paths-cloud.sh output/
+          cp saltminer.crt output/
+          cp saltminer.key output/
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.6.2
         with:
