@@ -5,6 +5,7 @@ echo -e "\nCreating configuration files."
 
 sudo mkdir -p $smcfg/nginx
 sudo cp ./nginx.conf $smcfg/nginx
+sudo cp ./saltminer.* $smcfg/nginx
 
 
 sudo mkdir $smcfg/agent
