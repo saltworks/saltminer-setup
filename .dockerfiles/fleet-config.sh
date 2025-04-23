@@ -37,13 +37,27 @@ agent_policy_response=$(curl --header "Content-Type: application/json" \
 policy_id=$(echo "$agent_policy_response" | jq -r '.item.id')
 echo "Policy ID: $policy_id"
 
-echo -e "Enrollment key acquisition\n"
+echo -e "Creating package policy"
+jq --arg id $policy_id '.policy_ids[] = $id' /scripts/package-policies.json > /scripts/package-policies.json.new
+mv /scripts/package-policies.json /scripts/package-policies.json.old
+mv /scripts/package-policies.json.new /scripts/package-policies.json
+package_policy=$(cat /scripts/package-policies.json)
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --header "kbn-xsrf: true" \
+  -u $ES_USER:$ES_PASS \
+  --data "$package_policy" \
+  "$KIBANA_BASE_URL/api/fleet/package_policies"
+
+
+echo -e "\nEnrollment key acquisition\n"
 key_response=$(curl \
  --request GET "$KIBANA_BASE_URL/api/fleet/enrollment_api_keys" \
  -u $ES_USER:$ES_PASS)
 
 TOKEN=$(echo $key_response | jq -r --arg policy_id $policy_id '.list[] | select(.active==true and .policy_id == $policy_id) | .api_key')
 
-echo "ENROLLMENT_TOKEN=$TOKEN" > /fleet-enroll-token
+echo "FLEET_ENROLLMENT_TOKEN=$TOKEN" > /fleet-enroll-token
+echo "FLEET_HOST=$KIBANA_BASE_URL" >> /fleet-enroll-token
 
 echo "Fleet configuration complete."

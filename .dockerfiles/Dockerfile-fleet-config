@@ -21,6 +21,7 @@ RUN addgroup \
 
 RUN mkdir /scripts
 COPY fleet-config.sh /scripts
+COPY package-policies.json /scripts
 RUN chown -R $USER:$USER /scripts
 RUN chmod u+x /scripts/fleet-config.sh
 

@@ -3,9 +3,9 @@ services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_PENTEST_IMAGE_VERSION}
     container_name: smpgui
     volumes:
-      - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
+    - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "no"
     init: true
     depends_on:
@@ -19,9 +19,16 @@ services:
     - type: bind
       source: /etc/saltworks/saltminer/api/appsettings.json
       target: /appsettings.json
+    - type: bind
+      source: ./fleet.env
+      target: /fleet-enroll-token
     restart: "no"
     networks:
     - ${CONTAINER_NETWORK}
+    group_add:
+    - ${CURRENT_GROUP}
+    profiles:
+    - fleet
 
   proxy:
     image: nginx:1.23.3-alpine
@@ -67,6 +74,7 @@ services:
     depends_on:
       fleet-config:
         condition: service_completed_successfully
+        required: false
     entrypoint: []
     command:
         - sh
@@ -160,10 +168,9 @@ services:
       - agent25-logs:/var/log/saltworks/saltminer-2.5.0
       - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
     environment:
-      - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
+#      - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
       - FLEET_ENROLL=1
       - FLEET_URL=${FLEET_SERVER_URL}
-      - FLEET_INSECURE=0
     networks:
       - ${CONTAINER_NETWORK}
     deploy:
@@ -181,6 +188,11 @@ services:
         condition: service_started
       jobmanager:
         condition: service_started
+      fleet-config:
+        condition: service_completed_successfully
+    env_file:
+    - path: ./fleet.env
+      required: false
     profiles:
     - fleet
 
