@@ -11,7 +11,18 @@ services:
     depends_on:
       ui-api:
         condition: service_healthy
-        
+
+  fleet-config:
+    image: fleet-config:1.0
+    container_name: fleet-config
+    volumes:
+    - type: bind
+      source: /etc/saltworks/saltminer/api/appsettings.json
+      target: /appsettings.json
+    restart: "no"
+    networks:
+    - ${CONTAINER_NETWORK}
+
   proxy:
     image: nginx:1.23.3-alpine
     container_name: nginx
@@ -53,6 +64,9 @@ services:
       start_period: 300s
     secrets:
       - sm-license
+    depends_on:
+      fleet-config:
+        condition: service_completed_successfully
     entrypoint: []
     command:
         - sh
@@ -137,7 +151,7 @@ services:
     image: docker.elastic.co/elastic-agent/elastic-agent:${STACK_VERSION}
     container_name: elastic-agent
     hostname: ${ELASTIC_AGENT_HOSTNAME}
-    restart: always
+    restart: on-failure:10
     user: root # note, synthetic browser monitors require this set to `elastic-agent`
     volumes:
       - services-logs:/var/log/saltworks/saltminer-3.0.0/services
@@ -168,7 +182,7 @@ services:
       jobmanager:
         condition: service_started
     profiles:
-      - fleet
+    - fleet
 
 volumes:
   agent25-logs:
