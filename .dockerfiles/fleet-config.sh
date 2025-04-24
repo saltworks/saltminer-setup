@@ -57,7 +57,9 @@ key_response=$(curl \
 
 TOKEN=$(echo $key_response | jq -r --arg policy_id $policy_id '.list[] | select(.active==true and .policy_id == $policy_id) | .api_key')
 
-echo "FLEET_ENROLLMENT_TOKEN=$TOKEN" > /fleet-enroll-token
-echo "FLEET_HOST=$KIBANA_BASE_URL" >> /fleet-enroll-token
+tee /fleet-enroll-token << EOF
+FLEET_ENROLLMENT_TOKEN=$TOKEN
+FLEET_HOST=$KIBANA_BASE_URL
+EOF
 
 echo "Fleet configuration complete."
