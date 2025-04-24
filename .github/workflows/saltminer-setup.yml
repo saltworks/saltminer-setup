@@ -24,7 +24,6 @@ jobs:
           cp -r config output/
           cp docker-compose.yml output/
           cp fleet.env output/
-          cp nginx.conf output/
           cp paths-cloud.sh output/
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.6.2
