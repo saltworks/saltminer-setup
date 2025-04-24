@@ -126,6 +126,9 @@ services:
       - type: bind
         source: /etc/saltworks/saltminer/python/Sources
         target: /etc/saltworks/saltminer-2.5.0/Sources
+      - type: bind
+        source: /etc/saltworks/servicemanager/ServiceManagerSettings.json
+        target: /etc/saltworks/saltminer-3.0.0/servicemanager/ServiceManagerSettings.json
       - sm25:/usr/share/saltworks/saltminer-2.5.0/Custom
       - services-logs:/var/log/saltworks/saltminer-3.0.0
       - agent25-logs:/var/log/saltworks/saltminer-2.5.0
