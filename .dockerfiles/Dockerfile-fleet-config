@@ -1,0 +1,30 @@
+FROM alpine
+
+RUN apk add --no-cache curl jq
+
+ENV USER=docker
+ENV GROUPNAME=$USER
+ENV UID=12345
+ENV GID=23456
+
+RUN addgroup \
+    --gid "$GID" \
+    "$GROUPNAME" \
+&&  adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$(pwd)" \
+    --ingroup "$GROUPNAME" \
+    --no-create-home \
+    --uid "$UID" \
+    $USER
+
+RUN mkdir /scripts
+COPY fleet-config.sh /scripts
+COPY package-policies.json /scripts
+RUN chown -R $USER:$USER /scripts
+RUN chmod u+x /scripts/fleet-config.sh
+
+USER docker
+
+ENTRYPOINT ["/scripts/fleet-config.sh"]
