@@ -4,7 +4,9 @@ smcfg="/etc/saltworks/saltminer"
 echo -e "\nCreating configuration files."
 
 sudo mkdir -p $smcfg/nginx
-sudo cp ./config/saltminer/nginx/nginx.conf $smcfg/nginx
+sudo cp ./nginx.conf $smcfg/nginx
+sudo cp ./saltminer.crt $smcfg/nginx
+sudo cp ./saltminer.key $smcfg/nginx
 
 
 sudo mkdir $smcfg/agent
