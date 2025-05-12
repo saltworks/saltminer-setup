@@ -13,7 +13,7 @@ services:
         condition: service_healthy
 
   fleet-config:
-    image: fleet-config:1.0
+    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:fleet-config-1.0
     container_name: fleet-config
     volumes:
     - type: bind
