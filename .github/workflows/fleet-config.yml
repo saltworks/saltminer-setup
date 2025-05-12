@@ -35,7 +35,7 @@ jobs:
         with:
           images: saltworks/saltminer
           tags: |
-            type=raw,value=fleet-config-${{ github.ref_name }}.{{date 'YYYYMMDD-HHmmss' tz='America/Chicago'}}
+            type=raw,value=fleet-config-1.0
           labels: |
             org.opencontainers.image.title=fleet-config
             org.opencontainers.image.description=SaltMiner Fleet Configuration
