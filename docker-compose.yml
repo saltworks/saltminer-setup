@@ -78,8 +78,6 @@ services:
           "curl -s http://localhost:5000/utility/version | grep -q '\"success\":true'",
         ]
       start_period: 300s
-    secrets:
-      - sm-license
     deploy:
       resources:
         limits:
@@ -90,16 +88,6 @@ services:
       fleet-config:
         condition: service_completed_successfully
         required: false
-    entrypoint: []
-    command:
-        - sh
-        - -c
-        - |
-          if [ -f /run/secrets/sm-license ]; then
-            echo "SaltMiner license present."
-            cp /run/secrets/sm-license /usr/share/saltworks/saltminer-3.0.0/api/license.txt
-          fi;
-          /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
@@ -267,7 +255,3 @@ volumes:
 networks:
   saltminer:
     driver: bridge
-
-secrets:
-  sm-license:
-    file: ./license.txt
