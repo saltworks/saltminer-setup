@@ -23,4 +23,7 @@ sudo cp ./config/saltminer/servicemanager/ServiceManagerSettings.json $smcfg/ser
 sudo cp ./config/saltminer/ui-api/appsettings.json $smcfg/ui-api
 sudo cp -r ./config/saltminer/jobmanager/* $smcfg/jobmanager/
 
+sudo mkdir -p /usr/share/saltworks/saltminer/python/Custom
+sudo cp -r ./config/saltminer/python-custom/* /usr/share/saltworks/saltminer/python/Custom
+
 echo -e "\nComplete.\n"

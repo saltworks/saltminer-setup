@@ -12,47 +12,28 @@ services:
       ui-api:
         condition: service_healthy
 
-  fleet-config:
-    image: ${CONTAINER_REGISTRY}/saltworks/saltminer:fleet-config-1.0
-    container_name: fleet-config
-    volumes:
-    - type: bind
-      source: /etc/saltworks/saltminer/api/appsettings.json
-      target: /appsettings.json
-    - type: bind
-      source: ./fleet.env
-      target: /fleet-enroll-token
-    restart: "no"
-    networks:
-    - ${CONTAINER_NETWORK}
-    group_add:
-    - ${CURRENT_GROUP}
-    profiles:
-    - fleet
-
   proxy:
     image: nginx:1.23.3-alpine
     container_name: nginx
     ports:
-      - "80:80"
-      - "443:443"
+    - "80:80"
+    - "443:443"
     volumes:
-      - type: bind
-        source: /etc/saltworks/saltminer/nginx/nginx.conf
-        target: /etc/nginx/nginx.conf
-        read_only: true
-      - type: bind
-        source: /etc/saltworks/saltminer/nginx/saltminer.crt
-        target: /etc/nginx/saltminer.crt
-        read_only: true
-      - type: bind
-        source: /etc/saltworks/saltminer/nginx/saltminer.key
-        target: /etc/nginx/saltminer.key
-        read_only: true
-        
-      - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
+    - type: bind
+      source: /etc/saltworks/saltminer/nginx/nginx.conf
+      target: /etc/nginx/nginx.conf
+      read_only: true
+    - type: bind
+      source: /etc/saltworks/saltminer/nginx/saltminer.crt
+      target: /etc/nginx/saltminer.crt
+      read_only: true
+    - type: bind
+      source: /etc/saltworks/saltminer/nginx/saltminer.key
+      target: /etc/nginx/saltminer.key
+      read_only: true    
+    - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "always"
     depends_on:
       ui-api:
@@ -62,14 +43,14 @@ services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_API_IMAGE_VERSION}
     container_name: api
     expose:
-      - "5000"
+    - "5000"
     volumes:
-      - type: bind
-        source: /etc/saltworks/saltminer/api/appsettings.json
-        target: /etc/saltworks/saltminer-3.0.0/api/appsettings.json
-      - api-logs:/var/log/saltworks/saltminer-3.0.0
+    - type: bind
+      source: /etc/saltworks/saltminer/api/appsettings.json
+      target: /etc/saltworks/saltminer-3.0.0/api/appsettings.json
+    - api-logs:/var/log/saltworks/saltminer-3.0.0
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "always"
     healthcheck:
       test:
@@ -84,26 +65,22 @@ services:
           memory: 1gb
         reservations:
           memory: 100mb
-    depends_on:
-      fleet-config:
-        condition: service_completed_successfully
-        required: false
 
   ui-api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
     container_name: ui-api
     hostname: ui-api
     expose:
-      - "5001"
+    - "5001"
     volumes:
-      - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
-      - ui-api-logs:/var/log/saltworks/saltminer-3.0.0
-      - type: bind
-        source: /etc/saltworks/saltminer/ui-api/appsettings.json
-        target: /appsettings.json
-        read_only: true
+    - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
+    - ui-api-logs:/var/log/saltworks/saltminer-3.0.0
+    - type: bind
+      source: /etc/saltworks/saltminer/ui-api/appsettings.json
+      target: /appsettings.json
+      read_only: true
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "always"
     healthcheck:
       test:
@@ -123,40 +100,42 @@ services:
         condition: service_healthy
     entrypoint: []
     command:
-        - sh
-        - -c
-        - |
-          if [ -f /appsettings.json ]; then
-            echo "Configuration file found."
-            cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
-          fi;
-          /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
+    - sh
+    - -c
+    - |
+      if [ -f /appsettings.json ]; then
+        echo "Configuration file found."
+        cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+      fi;
+      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
 
   sm-services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
     container_name: services
     hostname: services
     volumes:
-      - type: bind
-        source: /etc/saltworks/saltminer/agent/SourceConfigs
-        target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
-      - type: bind
-        source: /etc/saltworks/saltminer/python/Elastic.json
-        target: /etc/saltworks/saltminer-2.5.0/Elastic.json
-      - type: bind
-        source: /etc/saltworks/saltminer/python/saltworks.key
-        target: /etc/saltworks/saltminer-2.5.0/saltworks.key
-      - type: bind
-        source: /etc/saltworks/saltminer/python/Sources
-        target: /etc/saltworks/saltminer-2.5.0/Sources
-      - type: bind
-        source: /etc/saltworks/saltminer/servicemanager/ServiceManagerSettings.json
-        target: /etc/saltworks/saltminer-3.0.0/servicemanager/ServiceManagerSettings.json
-      - sm25:/usr/share/saltworks/saltminer-2.5.0/Custom
-      - services-logs:/var/log/saltworks/saltminer-3.0.0
-      - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+    - type: bind
+      source: /etc/saltworks/saltminer/agent/SourceConfigs
+      target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
+    - type: bind
+      source: /etc/saltworks/saltminer/python/Elastic.json
+      target: /etc/saltworks/saltminer-2.5.0/Elastic.json
+    - type: bind
+      source: /etc/saltworks/saltminer/python/saltworks.key
+      target: /etc/saltworks/saltminer-2.5.0/saltworks.key
+    - type: bind
+      source: /etc/saltworks/saltminer/python/Sources
+      target: /etc/saltworks/saltminer-2.5.0/Sources
+    - type: bind
+      source: /etc/saltworks/saltminer/servicemanager/ServiceManagerSettings.json
+      target: /etc/saltworks/saltminer-3.0.0/servicemanager/ServiceManagerSettings.json
+    - type: bind
+      source: /usr/share/saltworks/saltminer/python/Custom
+      target: /usr/share/saltworks/saltminer-2.5.0/Custom
+    - services-logs:/var/log/saltworks/saltminer-3.0.0
+    - agent25-logs:/var/log/saltworks/saltminer-2.5.0
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "always"
     depends_on:
       api:
@@ -173,13 +152,13 @@ services:
     container_name: jobmanager
     hostname: jobmanager
     volumes:
-      - type: bind
-        source: /etc/saltworks/saltminer/jobmanager/JobManagerSettings.json
-        target: /etc/saltworks/saltminer-3.0.0/jobmanager/JobManagerSettings.json
-      - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
-      - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0
+    - type: bind
+      source: /etc/saltworks/saltminer/jobmanager/JobManagerSettings.json
+      target: /etc/saltworks/saltminer-3.0.0/jobmanager/JobManagerSettings.json
+    - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
+    - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     restart: "always"
     depends_on:
       api:
@@ -200,17 +179,17 @@ services:
     restart: on-failure:10
     user: root # note, synthetic browser monitors require this set to `elastic-agent`
     volumes:
-      - services-logs:/var/log/saltworks/saltminer-3.0.0/services
-      - api-logs:/var/log/saltworks/saltminer-3.0.0/api
-      - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0/jobmanager
-      - agent25-logs:/var/log/saltworks/saltminer-2.5.0
-      - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
+    - services-logs:/var/log/saltworks/saltminer-3.0.0/services
+    - api-logs:/var/log/saltworks/saltminer-3.0.0/api
+    - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0/jobmanager
+    - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+    - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
     environment:
-#      - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
-      - FLEET_ENROLL=1
-      - FLEET_URL=${FLEET_SERVER_URL}
+    - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
+    - FLEET_ENROLL=1
+    - FLEET_URL=${FLEET_SERVER_URL}
     networks:
-      - ${CONTAINER_NETWORK}
+    - ${CONTAINER_NETWORK}
     deploy:
       resources:
         limits:
@@ -226,11 +205,6 @@ services:
         condition: service_started
       jobmanager:
         condition: service_started
-      fleet-config:
-        condition: service_completed_successfully
-    env_file:
-    - path: ./fleet.env
-      required: false
     profiles:
     - fleet
 
