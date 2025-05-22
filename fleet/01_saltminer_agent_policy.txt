@@ -1,0 +1,13 @@
+POST kbn:/api/fleet/agent_policies?sys_monitoring=true
+{
+  "name": "saltminer",
+  "description": "Monitor SaltMiner",
+  "namespace": "saltminer",
+  "monitoring_enabled": [
+    "logs",
+    "metrics",
+    "traces"
+  ],
+  "inactivity_timeout": 1209600,
+  "is_protected": false
+}
