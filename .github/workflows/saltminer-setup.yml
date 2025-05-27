@@ -54,7 +54,7 @@ jobs:
           --notes="SaltMiner ${{ env.TAG }} setup project."
     - name: debug
       run: |
-        curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J
+        curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }}
         pwd
         ls -la
         ls -la output
