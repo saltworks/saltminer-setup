@@ -19,6 +19,9 @@ jobs:
   package:
     runs-on: ubuntu-latest
 
+    env:
+      ARTIFACT_NAME: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
+
     steps:
     - uses: actions/checkout@v4
     - run: |
@@ -31,20 +34,11 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
-        name: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
+        name: ${{ env.ARTIFACT_NAME }}
         path: ./output
         retention-days: 30
         # Needed for .env file
         include-hidden-files: true
-    - name: debug
-      run: |
-        ls -la
-        ls -la output
-
-  release:
-    runs-on: ubuntu-latest
-
-    steps:
     - name: Create Release
       env:
        GH_TOKEN: ${{ github.token }}
