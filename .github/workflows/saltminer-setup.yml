@@ -52,3 +52,5 @@ jobs:
           --latest=false \
           --prerelease=true \
           --notes="SaltMiner v${{ github.ref_name }}-alpha.${{ github.run_number }} setup project."
+    - name: debug
+      run: ls -la
