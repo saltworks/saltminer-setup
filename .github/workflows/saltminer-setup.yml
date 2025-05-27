@@ -57,4 +57,5 @@ jobs:
     - name: Upload artifact to release
       run: |
         ls -la
+        mv ${{ env.ARTIFACT_NAME }} ${{ env.ARTIFACT_NAME }}.zip
         gh release upload ${{ env.TAG }} ${{ env.ARTIFACT_NAME }}.zip
