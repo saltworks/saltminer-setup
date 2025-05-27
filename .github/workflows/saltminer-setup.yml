@@ -36,6 +36,10 @@ jobs:
         retention-days: 30
         # Needed for .env file
         include-hidden-files: true
+    - name: debug
+      run: |
+        ls -la
+        ls -la output
 
   release:
     runs-on: ubuntu-latest
