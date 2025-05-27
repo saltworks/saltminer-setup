@@ -54,8 +54,9 @@ jobs:
           --prerelease=true \
           --notes="SaltMiner ${{ env.TAG }} setup project."
     - uses: actions/download-artifact@v4.3.0
+      with:
+        artifact-ids: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     - name: debug
       run: |
         pwd
         ls -la
-        ls -la output
