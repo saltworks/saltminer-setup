@@ -44,8 +44,6 @@ jobs:
         # Needed for .env file
         include-hidden-files: true
     - name: Create Release
-#      env:
-#       GH_TOKEN: ${{ github.token }}
       run: |
         gh release create ${{ env.TAG }} \
           --repo="$GITHUB_REPOSITORY" \
@@ -56,7 +54,6 @@ jobs:
     - uses: actions/download-artifact@v4.3.0
       with:
         artifact-ids: ${{ steps.artifact-upload-step.outputs.artifact-id }}
-    - name: debug
+    - name: Upload artifact to release
       run: |
-        pwd
-        ls -la
+        gh release upload ${{ env.TAG }} ${{ env.ARTIFACT_NAME }}.zip
