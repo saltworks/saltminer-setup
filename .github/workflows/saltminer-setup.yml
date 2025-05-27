@@ -24,7 +24,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - run: |
+    - name: Collect artifact files
+      run: |
         mkdir output
         cp .env output/
         cp -r config output/
@@ -32,6 +33,7 @@ jobs:
         cp fleet.env output/
         cp paths-cloud.sh output/
     - name: Upload a Build Artifact
+      id: artifact-upload-step
       uses: actions/upload-artifact@v4.6.2
       with:
         name: ${{ env.ARTIFACT_NAME }}
@@ -44,7 +46,7 @@ jobs:
        GH_TOKEN: ${{ github.token }}
       run: |
         gh release create "v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
-          ./output/*.zip \
+          $(curl ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J) \
           --repo="$GITHUB_REPOSITORY" \
           --title="v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
           --latest=false \
