@@ -56,6 +56,7 @@ jobs:
         artifact-ids: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     - name: Upload artifact to release
       run: |
-        zip -r ${{ env.ARTIFACT_NAME }}.zip ${{ env.ARTIFACT_NAME }}/*
-        ls -la ${{ env.ARTIFACT_NAME }}
+        cd ${{ env.ARTIFACT_NAME }}
+        zip -r ${{ env.ARTIFACT_NAME }}.zip .
+        ls -la .
         gh release upload ${{ env.TAG }} ${{ env.ARTIFACT_NAME }}.zip
