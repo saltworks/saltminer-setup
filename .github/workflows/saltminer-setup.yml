@@ -46,7 +46,7 @@ jobs:
        GH_TOKEN: ${{ github.token }}
       run: |
         gh release create "v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
-          $(curl ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J) \
+          $(curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J) \
           --repo="$GITHUB_REPOSITORY" \
           --title="v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
           --latest=false \
