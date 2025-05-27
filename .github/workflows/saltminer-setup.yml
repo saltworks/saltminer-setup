@@ -58,4 +58,4 @@ jobs:
       run: |
         zip ${{ env.ARTIFACT_NAME }}.zip ${{ env.ARTIFACT_NAME }}/* -r 
         ls -la ${{ env.ARTIFACT_NAME }}
-        
+        gh release upload ${{ env.TAG }} ${{ env.ARTIFACT_NAME }}/${{ env.ARTIFACT_NAME }}.zip
