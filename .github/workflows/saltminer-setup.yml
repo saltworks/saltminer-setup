@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      GH_TOKEN: ${{ github.token }}
       ARTIFACT_NAME: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
       TAG: v${{ github.ref_name }}-alpha.${{ github.run_number }}
 
@@ -43,8 +44,8 @@ jobs:
         # Needed for .env file
         include-hidden-files: true
     - name: Create Release
-      env:
-       GH_TOKEN: ${{ github.token }}
+#      env:
+#       GH_TOKEN: ${{ github.token }}
       run: |
         gh release create ${{ env.TAG }} \
           --repo="$GITHUB_REPOSITORY" \
