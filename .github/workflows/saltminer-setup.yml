@@ -53,12 +53,9 @@ jobs:
           --latest=false \
           --prerelease=true \
           --notes="SaltMiner ${{ env.TAG }} setup project."
+    - uses: actions/download-artifact@v4.3.0
     - name: debug
       run: |
-        gh api \
-          -H "Accept: application/vnd.github+json" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          /repos/${{ github.repository }}/actions/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}/zip
         pwd
         ls -la
         ls -la output
