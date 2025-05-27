@@ -58,7 +58,7 @@ jobs:
         gh api \
           -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        /repos/${{ github.repository }}/actions/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}
+        /repos/${{ github.repository }}/actions/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}/ZIP
         pwd
         ls -la
         ls -la output
