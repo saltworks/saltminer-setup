@@ -54,7 +54,10 @@ jobs:
           --notes="SaltMiner ${{ env.TAG }} setup project."
     - name: debug
       run: |
-        curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }}
+        gh api \
+          -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        /repos/${{ github.repository }}/actions/artifacts/${{ steps.artifact-upload-step.outputs.artifact-id }}
         pwd
         ls -la
         ls -la output
