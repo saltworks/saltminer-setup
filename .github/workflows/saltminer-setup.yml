@@ -21,6 +21,7 @@ jobs:
 
     env:
       ARTIFACT_NAME: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
+      TAG: v${{ github.ref_name }}-alpha.${{ github.run_number }}
 
     steps:
     - uses: actions/checkout@v4
@@ -45,12 +46,15 @@ jobs:
       env:
        GH_TOKEN: ${{ github.token }}
       run: |
-        gh release create "v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
-          $(curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J) \
+        gh release create ${{ env.TAG }} \
           --repo="$GITHUB_REPOSITORY" \
-          --title="v${{ github.ref_name }}-alpha.${{ github.run_number }}" \
+          --title=${{ env.TAG }} \
           --latest=false \
           --prerelease=true \
-          --notes="SaltMiner v${{ github.ref_name }}-alpha.${{ github.run_number }} setup project."
+          --notes="SaltMiner ${{ env.TAG }} setup project."
     - name: debug
-      run: ls -la
+      run: |
+        curl -L ${{ steps.artifact-upload-step.outputs.artifact-url }} -O -J
+        pwd
+        ls -la
+        ls -la output
