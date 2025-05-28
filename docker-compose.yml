@@ -79,6 +79,8 @@ services:
       source: /etc/saltworks/saltminer/ui-api/appsettings.json
       target: /appsettings.json
       read_only: true
+    environment:
+    - KIBANA_URL=${KIBANA_URL}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -106,6 +108,7 @@ services:
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
         cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        # /scripts/config-ui-api.sh
       fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
 
