@@ -65,6 +65,12 @@ services:
           memory: 1gb
         reservations:
           memory: 100mb
+    entrypoint: []
+    command:
+    - sh
+    - -c
+    - |
+      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
