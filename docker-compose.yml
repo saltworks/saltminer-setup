@@ -51,6 +51,7 @@ services:
     - api-logs:/var/log/saltworks/saltminer-3.0.0
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
+    - KIBANA_URL=${KIBANA_URL}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -72,6 +73,8 @@ services:
     - sh
     - -c
     - |
+      /usr/share/saltworks/saltminer-3.0.0/api/config-api.sh
+      # ./config-api.sh
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
@@ -145,6 +148,8 @@ services:
       target: /usr/share/saltworks/saltminer-2.5.0/Custom
     - services-logs:/var/log/saltworks/saltminer-3.0.0
     - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+    environment:
+    - ELASTIC_URL=${ELASTICSEARCH_URL}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
