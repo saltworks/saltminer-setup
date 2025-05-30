@@ -47,7 +47,7 @@ services:
     volumes:
     - type: bind
       source: /etc/saltworks/saltminer/api/appsettings.json
-      target: /etc/saltworks/saltminer-3.0.0/api/appsettings.json
+      target: /appsettings.json
     - api-logs:/var/log/saltworks/saltminer-3.0.0
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
@@ -73,8 +73,11 @@ services:
     - sh
     - -c
     - |
-      /usr/share/saltworks/saltminer-3.0.0/api/config-api.sh
-      # ./config-api.sh
+      if [ -f /appsettings.json ]; then
+        echo "Configuration file found."
+        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        ./config-api.sh
+      fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
