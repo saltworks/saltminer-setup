@@ -136,7 +136,7 @@ services:
       target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
     - type: bind
       source: /etc/saltworks/saltminer/python/Elastic.json
-      target: /etc/saltworks/saltminer-2.5.0/Elastic.json
+      target: /Elastic.json
     - type: bind
       source: /etc/saltworks/saltminer/python/saltworks.key
       target: /etc/saltworks/saltminer-2.5.0/saltworks.key
@@ -165,6 +165,16 @@ services:
           memory: 1gb
         reservations:
           memory: 100mb
+    entrypoint: []
+    command:
+    - sh
+    - -c
+    - |
+      if [ -f /Elastic.json ]; then
+        echo "Python configuration file found."
+        /usr/share/saltworks/saltminer-3.0.0/servicemanager/config-services.sh
+      fi;
+      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/servicemanager/Saltworks.SaltMiner.ServiceManager.dll
 
   jobmanager:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_JOBMANAGER_IMAGE_VERSION}
