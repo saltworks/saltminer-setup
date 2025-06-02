@@ -13,7 +13,7 @@ services:
         condition: service_healthy
 
   proxy:
-    image: nginx:1.23.3-alpine
+    image: nginx:1.28.0-alpine
     container_name: nginx
     ports:
     - "80:80"
@@ -32,6 +32,8 @@ services:
       target: /etc/nginx/saltminer.key
       read_only: true    
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
+    environment:
+    - KIBANA_URL=${KIBANA_URL}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -75,8 +77,8 @@ services:
     - |
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
-        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
-        ./config-api.sh
+        cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        #./config-api.sh
       fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
