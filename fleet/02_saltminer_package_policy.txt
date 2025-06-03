@@ -2,7 +2,7 @@ POST kbn:/api/fleet/package_policies
 {
   "package": {
     "name": "log",
-    "version": "2.4.0"
+    "version": "2.4.4"
   },
   "name": "saltminer-logs",
   "namespace": "saltminer",
