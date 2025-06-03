@@ -21,7 +21,8 @@ services:
     volumes:
     - type: bind
       source: /etc/saltworks/saltminer/nginx/nginx.conf
-      target: /etc/nginx/nginx.conf
+      #target: /etc/nginx/nginx.conf
+      target: /nginx.conf
       read_only: true
     - type: bind
       source: /etc/saltworks/saltminer/nginx/saltminer.crt
@@ -30,7 +31,7 @@ services:
     - type: bind
       source: /etc/saltworks/saltminer/nginx/saltminer.key
       target: /etc/nginx/saltminer.key
-      read_only: true    
+      read_only: true
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
     environment:
     - KIBANA_URL=${KIBANA_URL}
@@ -40,6 +41,21 @@ services:
     depends_on:
       ui-api:
         condition: service_healthy
+    command:
+    - sh
+    - -c
+    - |
+      if [ -f /nginx.conf ]; then
+        echo 'Configuration file found.'
+        cp /nginx.conf /etc/nginx/nginx.conf
+        KIBANA_HOST=$$(echo ${KIBANA_URL} | awk -F'//' '{print $2}')
+        echo "Host: $${KIBANA_HOST:=unknown}"
+        sed -i -e "s#<your-kibana-url-here>#${KIBANA_URL}#g" /etc/nginx/nginx.conf
+        sed -i -e "s#<your-kibana-HOST-name-here>#$${KIBANA_HOST:=unknown}#g" /etc/nginx/nginx.conf
+      else
+        echo 'Configuration file NOT found!'
+      fi;
+      nginx '-g' 'daemon off;'
 
   api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_API_IMAGE_VERSION}
@@ -77,8 +93,8 @@ services:
     - |
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
-        cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
-        #./config-api.sh
+        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        ./config-api.sh
       fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
@@ -123,8 +139,8 @@ services:
     - |
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
-        cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
-        # /scripts/config-ui-api.sh
+        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        /scripts/config-ui-api.sh
       fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
 
