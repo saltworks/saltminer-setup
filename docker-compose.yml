@@ -41,6 +41,12 @@ services:
     depends_on:
       ui-api:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1gb
+        reservations:
+          memory: 100mb
     command:
     - sh
     - -c
