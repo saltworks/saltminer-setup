@@ -273,8 +273,6 @@ volumes:
     driver: local
   smpgui-assets:
     driver: local
-  sm25:
-    driver: local
   ui-api-logs:
     driver: local
   ui-files:
