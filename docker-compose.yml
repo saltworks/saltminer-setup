@@ -74,6 +74,9 @@ services:
       source: /etc/saltworks/saltminer/api/appsettings.json
       target: /appsettings.json
     - api-logs:/var/log/saltworks/saltminer-3.0.0
+    #- type: bind
+    #  source: /etc/saltworks/saltminer/data-templates
+    #  target: /data-templates
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
     - KIBANA_URL=${KIBANA_URL}
@@ -103,6 +106,12 @@ services:
         #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
         ./config-api.sh
       fi;
+      #if [ "$(ls -A /data-templates/ingest-pipelines)" ]; then
+      #  echo "Files exist in the ingest-pipelines directory."
+      #  cp /data-templates/ingest-pipelines/*  /usr/share/saltworks/saltminer-3.0.0/api/data/ingest-pipelines/
+      #else
+      #  echo "No extra ingest pipelines to process."
+      #fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
