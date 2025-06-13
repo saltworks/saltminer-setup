@@ -26,4 +26,7 @@ sudo cp -r ./config/saltminer/jobmanager/* $smcfg/jobmanager/
 sudo mkdir -p /usr/share/saltworks/saltminer/python/Custom
 sudo cp -r ./config/saltminer/python-custom/* /usr/share/saltworks/saltminer/python/Custom
 
+sudo mkdir $smcfg/kibana
+sudo cp ./config/saltminer/kibana/kibana.yml $smcfg/kibana
+
 echo -e "\nComplete.\n"

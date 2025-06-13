@@ -1,0 +1,12 @@
+server.host: "0.0.0.0"
+# Unique encryptionKeys should be generated for each installation.
+# https://www.elastic.co/docs/reference/kibana/commands/kibana-encryption-keys
+xpack.encryptedSavedObjects.encryptionKey: c59b07fcdd378add9237f234f0da6c22
+xpack.reporting.encryptionKey: b0cd52a63805fa595f922219b0130c67
+xpack.security.encryptionKey: 3d43932ae8129454373a87b77e96fc03
+# Fleet will run on another Kibana server.
+xpack.fleet.agents.enabled: false
+
+telemetry:
+  enabled: false
+  optIn: false
