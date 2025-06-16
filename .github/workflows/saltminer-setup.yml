@@ -30,8 +30,10 @@ jobs:
       run: |
         mkdir output
         cp .env output/
+        cp es.env output/
         cp -r config output/
         cp docker-compose.yml output/
+        cp docker-compose-local.yml output/
         cp paths-cloud.sh output/
     - name: Upload a Build Artifact
       id: artifact-upload-step
