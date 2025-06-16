@@ -1,10 +1,5 @@
 # Inspiration:
 # https://www.elastic.co/guide/en/elastic-stack-get-started/7.17/get-started-docker.html#get-started-docker-tls
-
-# Uncomment next two lines to enable multi-node madness!
-#include:
-#  - ./docker-compose-multinode.yml
-
 services:
   setup:
       image: docker.elastic.co/elasticsearch/elasticsearch-wolfi:${STACK_VERSION}
@@ -80,13 +75,11 @@ services:
     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     - node.name=es01
     - cluster.name=${CLUSTER_NAME}
-    - discovery.type=${DISCOVERY_TYPE}
     - "${DISCOVERY_SEED_HOSTS:-ES_SM_NOSEEDHOSTS}=es02,es03"
     - "${CLUSTER_INITIAL_MASTER_NODES:-ES_SM_NOMASTERNODES}=es01,es02,es03"
     - ingest.geoip.downloader.enabled=false
     - bootstrap.memory_lock=true 
     - xpack.security.enabled=true
-    - xpack.security.http.ssl.enabled=${XPACK_SECURITY_HTTP_SSL_ENABLED}
     - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
     - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
     - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
@@ -123,6 +116,8 @@ services:
           memory: 3gb
         reservations:
           memory: 500mb
+    env_file:
+    - es.env
 
   kibana:
     depends_on:
@@ -162,6 +157,8 @@ services:
           memory: 2gb
         reservations:
           memory: 500mb
+#    secrets:
+#    - es-license
     command: >
         bash -c '
           if [ -f /run/secrets/es-license ]; then
@@ -455,3 +452,7 @@ volumes:
 networks:
   saltminer:
     driver: bridge
+
+#secrets:
+#  es-license:
+#    file: ./elastic-license.json
