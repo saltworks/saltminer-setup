@@ -15,6 +15,7 @@ sudo mkdir -p $smcfg/jobmanager/report-templates
 sudo mkdir $smcfg/python
 sudo mkdir $smcfg/servicemanager
 sudo mkdir $smcfg/ui-api
+sudo mkdir $smcfg/manager
 
 sudo cp -r ./config/saltminer/python/* $smcfg/python
 sudo cp -r ./config/saltminer/agent/SourceConfigs/ $smcfg/agent/
