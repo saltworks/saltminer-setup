@@ -354,7 +354,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1gb
+          memory: ${SERVICES_MEMORY_LIMIT}
         reservations:
           memory: 100mb
     entrypoint: []
