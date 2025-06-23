@@ -211,6 +211,10 @@ services:
         echo "Python configuration file found."
         /usr/share/saltworks/saltminer-3.0.0/servicemanager/config-services.sh
       fi;
+      if [ -d /usr/share/saltworks/saltminer-2.5.0/Custom ]; then
+        echo 'Python custom directory exists.'
+        find /usr/share/saltworks/saltminer-2.5.0/Custom -name '*.sh' | xargs dos2unix
+      fi;
       /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/servicemanager/Saltworks.SaltMiner.ServiceManager.dll
 
   jobmanager:
