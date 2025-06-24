@@ -33,7 +33,7 @@ services:
       target: /etc/nginx/saltminer.key
       read_only: true
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
-    - .env:/usr/share/nginx/html/version/env.txt
+    #- .env:/usr/share/nginx/html/version/env.txt
     environment:
     - KIBANA_URL=${KIBANA_URL}
     networks:
