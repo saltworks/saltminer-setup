@@ -346,6 +346,7 @@ services:
       target: /etc/saltworks/saltminer-3.0.0/manager/ManagerSettings.json
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
+    - ELASTIC_PWD=${ELASTIC_PASSWORD}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
