@@ -80,6 +80,7 @@ services:
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
     - KIBANA_URL=${KIBANA_URL}
+    - ELASTIC_PWD=${ELASTIC_PASSWORD}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
