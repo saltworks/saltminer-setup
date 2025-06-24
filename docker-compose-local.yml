@@ -326,7 +326,7 @@ services:
       target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
     - type: bind
       source: /etc/saltworks/saltminer/python/Elastic.json
-      target: /etc/saltworks/saltminer-2.5.0/Elastic.json
+      target: /Elastic.json
     - type: bind
       source: /etc/saltworks/saltminer/python/saltworks.key
       target: /etc/saltworks/saltminer-2.5.0/saltworks.key
