@@ -1,7 +1,6 @@
 name: Package SaltMiner Setup
 
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches:
     - main
@@ -9,30 +8,56 @@ on:
     paths-ignore:
     - '.github/workflows/fleet-config.yml'
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   package:
     runs-on: ubuntu-latest
 
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ARTIFACT_NAME: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
+      TAG: v${{ github.ref_name }}-alpha.${{ github.run_number }}
+
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          mkdir output
-          cp .env output/
-          cp -r config output/
-          cp docker-compose.yml output/
-          cp fleet.env output/
-          cp paths-cloud.sh output/
-          cp saltminer.crt output/
-          cp saltminer.key output/
-          cp license.txt output/
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: saltminer-setup-${{ github.ref_name }}-${{ github.run_number }}
-          path: ./output
-          retention-days: 30
-          # Needed for .env file
-          include-hidden-files: true
+    - uses: actions/checkout@v4
+    - name: Collect artifact files
+      run: |
+        mkdir output
+        cp .env output/
+        cp es.env output/
+        cp -r config output/
+        cp docker-compose.yml output/
+        cp docker-compose-local.yml output/
+        cp paths-cloud.sh output/
+    - run: sudo apt install -y dos2unix
+    - run: dos2unix output/*.sh
+    - name: Upload a Build Artifact
+      id: artifact-upload-step
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ./output
+        retention-days: 30
+        # Needed for .env file
+        include-hidden-files: true
+    - name: Create Release
+      run: |
+        gh release create ${{ env.TAG }} \
+          --repo="$GITHUB_REPOSITORY" \
+          --title=${{ env.TAG }} \
+          --latest=false \
+          --prerelease=true \
+          --notes="SaltMiner ${{ env.TAG }} setup project."
+    - uses: actions/download-artifact@v4.3.0
+      with:
+        artifact-ids: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    - name: Upload artifact to release
+      run: |
+        cd ${{ env.ARTIFACT_NAME }}
+        zip -r ${{ env.ARTIFACT_NAME }}.zip .
+        ls -la .
+        gh release upload ${{ env.TAG }} ${{ env.ARTIFACT_NAME }}.zip

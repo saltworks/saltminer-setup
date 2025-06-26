@@ -1,0 +1,40 @@
+POST kbn:/api/fleet/package_policies
+{
+  "package": {
+    "name": "log",
+    "version": "2.4.4"
+  },
+  "name": "saltminer-logs",
+  "namespace": "saltminer",
+  "description": "Consume SaltMiner logs",
+  "policy_ids": [
+    "<< Add policy ID here >>"
+  ],
+  "output_id": null,
+  "vars": {},
+  "inputs": {
+    "logs-logfile": {
+      "enabled": true,
+      "streams": {
+        "log.logs": {
+          "enabled": true,
+          "vars": {
+            "paths": [
+              "/var/log/saltworks/saltminer-2.5.0/*.log",
+              "/var/log/saltworks/saltminer-3.0.0/api/*.log",
+              "/var/log/saltworks/saltminer-3.0.0/jobmanager/*.log",
+              "/var/log/saltworks/saltminer-3.0.0/services/*.log",
+              "/var/log/saltworks/saltminer-3.0.0/ui-api/*.log"
+            ],
+            "exclude_files": [],
+            "ignore_older": "72h",
+            "data_stream.dataset": "saltminer",
+            "tags": [],
+            "processors": "- decode_json_fields:\r\n    fields: [\"message\"]\r\n    overwrite_keys: true\r\n    target: \"\"",
+            "custom": ""
+          }
+        }
+      }
+    }
+  }
+}

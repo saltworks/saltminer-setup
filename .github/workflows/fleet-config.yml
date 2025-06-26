@@ -1,11 +1,11 @@
 name: Fleet Config
 
 on:
-  push:
-    branches:
-    - '3.*'
-    paths:
-    - '.github/workflows/fleet-config.yml'
+#  push:
+#    branches:
+#    - '3.*'
+#    paths:
+#    - '.github/workflows/fleet-config.yml'
 
   workflow_dispatch:
 
@@ -35,7 +35,7 @@ jobs:
         with:
           images: saltworks/saltminer
           tags: |
-            type=raw,value=fleet-config-${{ github.ref_name }}.{{date 'YYYYMMDD-HHmmss' tz='America/Chicago'}}
+            type=raw,value=fleet-config-1.0
           labels: |
             org.opencontainers.image.title=fleet-config
             org.opencontainers.image.description=SaltMiner Fleet Configuration
@@ -47,7 +47,7 @@ jobs:
         with:
           file: .dockerfiles/Dockerfile-fleet-config
           context: .dockerfiles
-          push: false
+          push: true
           provenance: mode=max
           sbom: true
           tags: ${{ steps.meta.outputs.tags }}

@@ -1,4 +1,173 @@
+# Inspiration:
+# https://www.elastic.co/guide/en/elastic-stack-get-started/7.17/get-started-docker.html#get-started-docker-tls
 services:
+  setup:
+      image: docker.elastic.co/elasticsearch/elasticsearch-wolfi:${STACK_VERSION}
+      volumes:
+        - certs:/usr/share/elasticsearch/config/certs
+      user: "0"
+      command: >
+        bash -c '
+          if [ x${ELASTIC_PASSWORD} == x ]; then
+            echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+            exit 1;
+          elif [ x${KIBANA_PASSWORD} == x ]; then
+            echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+            exit 1;
+          fi;
+          if [ ! -f config/certs/ca.zip ]; then
+            echo "Creating CA";
+            bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+            unzip config/certs/ca.zip -d config/certs;
+          fi;
+          if [ ! -f config/certs/certs.zip ]; then
+            echo "Creating certs";
+            echo -ne \
+            "instances:\n"\
+            "  - name: es01\n"\
+            "    dns:\n"\
+            "      - es01\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            "  - name: es02\n"\
+            "    dns:\n"\
+            "      - es02\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            "  - name: es03\n"\
+            "    dns:\n"\
+            "      - es03\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            > config/certs/instances.yml;
+            bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+            unzip config/certs/certs.zip -d config/certs;
+          fi;
+          echo "Setting file permissions"
+          chown -R root:root config/certs;
+          find . -type d -exec chmod 750 \{\} \;;
+          find . -type f -exec chmod 640 \{\} \;;
+          echo "Waiting for Elasticsearch availability";
+          until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+          echo "Setting kibana_system password";
+          until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+          echo "All done!";
+        '
+      healthcheck:
+        test: ["CMD-SHELL", "[ -f config/certs/es01/es01.crt ]"]
+        interval: 1s
+        timeout: 5s
+        retries: 120
+      networks:
+      - ${CONTAINER_NETWORK}
+
+  es01:
+    depends_on:
+      setup:
+        condition: service_healthy
+    image: docker.elastic.co/elasticsearch/elasticsearch-wolfi:${STACK_VERSION}
+    container_name: es01
+    hostname: es01
+    environment:
+    - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    - node.name=es01
+    - cluster.name=${CLUSTER_NAME}
+    - "${DISCOVERY_SEED_HOSTS:-ES_SM_NOSEEDHOSTS}=es02,es03"
+    - "${CLUSTER_INITIAL_MASTER_NODES:-ES_SM_NOMASTERNODES}=es01,es02,es03"
+    - ingest.geoip.downloader.enabled=false
+    - bootstrap.memory_lock=true 
+    - xpack.security.enabled=true
+    - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
+    - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+    - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+    - xpack.security.http.ssl.verification_mode=none
+    - xpack.security.transport.ssl.enabled=true
+    - xpack.security.transport.ssl.verification_mode=certificate
+    - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+    - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
+    - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+    - data01:/usr/share/elasticsearch/data
+    - certs:$CERTS_DIR
+    ports:
+    - 9200:9200
+    networks:
+    - ${CONTAINER_NETWORK}
+    restart: "always"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    deploy:
+      resources:
+        limits:
+          memory: 3gb
+        reservations:
+          memory: 500mb
+    env_file:
+    - es.env
+
+  kibana:
+    depends_on:
+      es01:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana-wolfi:${STACK_VERSION}
+    container_name: kibana
+    hostname: kibana
+    expose:
+    - "5601"
+    environment:
+    - SERVERNAME=SaltMiner
+    - ELASTICSEARCH_HOSTS=["https://es01:9200"]
+    - ELASTICSEARCH_USERNAME=kibana_system
+    - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+    - SERVER_PUBLICBASEURL=${KIBANA_URL}
+    volumes:
+    - certs:/usr/share/kibana/config/certs
+    - kibanadata:/usr/share/kibana/data
+    - /etc/saltworks/saltminer/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    networks:
+    - ${CONTAINER_NETWORK}
+    restart: "always"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -u elastic:${ELASTIC_PASSWORD} http://kibana:5601/api/status | grep -q 'All services are available'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    deploy:
+      resources:
+        limits:
+          memory: 2gb
+        reservations:
+          memory: 500mb
+#    secrets:
+#    - es-license
+    command: >
+        bash -c '
+          if [ -f /run/secrets/es-license ]; then
+            echo "Elasticsearch license present."
+            curl -XPUT --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} https://es01:9200/_license -H "Content-Type: application/json" -d @/run/secrets/es-license
+          fi;
+          /usr/local/bin/kibana-docker
+        '
+
   smpgui:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_PENTEST_IMAGE_VERSION}
     container_name: smpgui
@@ -21,7 +190,6 @@ services:
     volumes:
     - type: bind
       source: /etc/saltworks/saltminer/nginx/nginx.conf
-      #target: /etc/nginx/nginx.conf
       target: /nginx.conf
       read_only: true
     - type: bind
@@ -33,7 +201,6 @@ services:
       target: /etc/nginx/saltminer.key
       read_only: true
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
-    #- .env:/usr/share/nginx/html/version/env.txt
     environment:
     - KIBANA_URL=${KIBANA_URL}
     networks:
@@ -84,6 +251,9 @@ services:
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
+    depends_on:
+      kibana:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -124,10 +294,6 @@ services:
     volumes:
     - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
     - ui-api-logs:/var/log/saltworks/saltminer-3.0.0
-    - type: bind
-      source: /etc/saltworks/saltminer/ui-api/appsettings.json
-      target: /appsettings.json
-      read_only: true
     environment:
     - KIBANA_URL=${KIBANA_URL}
     networks:
@@ -149,18 +315,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    entrypoint: []
-    command:
-    - sh
-    - -c
-    - |
-      if [ -f /appsettings.json ]; then
-        echo "Configuration file found."
-        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
-        /scripts/config-ui-api.sh
-      fi;
-      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
-
+       
   sm-services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
     container_name: services
@@ -260,6 +415,7 @@ services:
     - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
     - FLEET_ENROLL=1
     - FLEET_URL=${FLEET_SERVER_URL}
+    - FLEET_INSECURE=1
     networks:
     - ${CONTAINER_NETWORK}
     deploy:
@@ -285,7 +441,13 @@ volumes:
     driver: local
   api-logs:
     driver: local
+  certs:
+    driver: local
+  data01:
+    driver: local
   jobmanager-logs:
+    driver: local
+  kibanadata:
     driver: local
   services-logs:
     driver: local
@@ -299,3 +461,7 @@ volumes:
 networks:
   saltminer:
     driver: bridge
+
+#secrets:
+#  es-license:
+#    file: ./elastic-license.json
