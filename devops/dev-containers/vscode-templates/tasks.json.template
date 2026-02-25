@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SM: Rebuild api",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/services/api/rebuild | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Rebuild ui-api",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/services/ui-api/rebuild | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Rebuild sm-services",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/services/sm-services/rebuild | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Rebuild jobmanager",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/services/jobmanager/rebuild | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Rebuild ALL services",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/services/rebuild-all | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Restart UI (Vite)",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/ui/restart | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Service status",
+      "type": "shell",
+      "command": "curl -s http://localhost:8080/api/services | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "SM: Checkout branch",
+      "type": "shell",
+      "command": "curl -s -X POST -H 'X-API-Key: ${input:apiKey}' http://localhost:8080/api/repo/checkout/${input:branch} | python3 -m json.tool",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "apiKey",
+      "type": "promptString",
+      "description": "Flask API key",
+      "password": true
+    },
+    {
+      "id": "branch",
+      "type": "promptString",
+      "description": "Branch name to checkout"
+    }
+  ]
+}

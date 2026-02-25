@@ -1,0 +1,9 @@
+{
+  "remote.SSH.defaultForwardedPorts": [
+    { "localPort": 8080, "remotePort": 8080, "name": "Flask Orchestration API" },
+    { "localPort": 5173, "remotePort": 5173, "name": "Vite Dev Server" }
+  ],
+  "remote.SSH.serverInstallPath": {
+    "<YOUR_VM_HOST>": "/home/<YOUR_VM_USER>/.vscode-server"
+  }
+}
