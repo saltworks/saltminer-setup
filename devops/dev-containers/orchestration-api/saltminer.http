@@ -1,0 +1,139 @@
+# saltminer.http
+# VS Code REST Client / httpyac compatible.
+# Install REST Client extension: ms-vscode.rest-client
+# Or httpyac: anweber.vscode-httpyac
+#
+# Usage:
+#   1. Open this file in VS Code
+#   2. Set the variables below
+#   3. Click "Send Request" above any ### block
+
+@baseUrl = http://localhost:8080
+@apiKey = changeme
+
+# ── Read-only ─────────────────────────────────────────────────────────────────
+
+### Overall stack status
+GET {{baseUrl}}/api/status
+
+###
+
+### List all services with status
+GET {{baseUrl}}/api/services
+
+###
+
+### Get api logs (last 100 lines)
+GET {{baseUrl}}/api/services/api/logs?lines=100
+
+###
+
+### Get ui-api logs
+GET {{baseUrl}}/api/services/ui-api/logs?lines=100
+
+###
+
+### Get sm-services logs
+GET {{baseUrl}}/api/services/sm-services/logs?lines=100
+
+###
+
+### Get jobmanager logs
+GET {{baseUrl}}/api/services/jobmanager/logs?lines=100
+
+###
+
+### Get smpgui (Vite) logs
+GET {{baseUrl}}/api/services/smpgui/logs?lines=200
+
+# ── Service control ───────────────────────────────────────────────────────────
+
+### Start api
+POST {{baseUrl}}/api/services/api/start
+X-API-Key: {{apiKey}}
+
+###
+
+### Stop api
+POST {{baseUrl}}/api/services/api/stop
+X-API-Key: {{apiKey}}
+
+###
+
+### Rebuild api (builds debug image from source, then restarts)
+POST {{baseUrl}}/api/services/api/rebuild
+X-API-Key: {{apiKey}}
+
+###
+
+### Start ui-api
+POST {{baseUrl}}/api/services/ui-api/start
+X-API-Key: {{apiKey}}
+
+###
+
+### Stop ui-api
+POST {{baseUrl}}/api/services/ui-api/stop
+X-API-Key: {{apiKey}}
+
+###
+
+### Rebuild ui-api
+POST {{baseUrl}}/api/services/ui-api/rebuild
+X-API-Key: {{apiKey}}
+
+###
+
+### Start sm-services
+POST {{baseUrl}}/api/services/sm-services/start
+X-API-Key: {{apiKey}}
+
+###
+
+### Stop sm-services
+POST {{baseUrl}}/api/services/sm-services/stop
+X-API-Key: {{apiKey}}
+
+###
+
+### Rebuild sm-services
+POST {{baseUrl}}/api/services/sm-services/rebuild
+X-API-Key: {{apiKey}}
+
+###
+
+### Start jobmanager
+POST {{baseUrl}}/api/services/jobmanager/start
+X-API-Key: {{apiKey}}
+
+###
+
+### Stop jobmanager
+POST {{baseUrl}}/api/services/jobmanager/stop
+X-API-Key: {{apiKey}}
+
+###
+
+### Rebuild jobmanager
+POST {{baseUrl}}/api/services/jobmanager/rebuild
+X-API-Key: {{apiKey}}
+
+###
+
+### Rebuild ALL services (builds all debug images, then starts everything)
+# ⚠ This may take 5-10 minutes on first run
+POST {{baseUrl}}/api/services/rebuild-all
+X-API-Key: {{apiKey}}
+
+###
+
+### Restart UI (Vite dev server — stop + npm install + npm run dev)
+POST {{baseUrl}}/api/ui/restart
+X-API-Key: {{apiKey}}
+
+# ── Repository ────────────────────────────────────────────────────────────────
+
+### Checkout a branch on the saltminer source repo
+# Branch name is in the URL path. After checkout, rebuild to pick up changes.
+POST {{baseUrl}}/api/repo/checkout/main
+X-API-Key: {{apiKey}}
