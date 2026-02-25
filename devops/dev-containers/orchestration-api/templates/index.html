@@ -1,1 +1,160 @@
-<html><body>placeholder</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaltMiner Dev</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+    h1 { color: #7dd3fc; margin-bottom: 0.25rem; }
+    .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.9rem; }
+    .api-key-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem; }
+    .api-key-row label { color: #94a3b8; font-size: 0.85rem; }
+    .api-key-row input { background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+                         padding: 0.4rem 0.7rem; border-radius: 4px; width: 260px; font-family: monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    th { text-align: left; padding: 0.6rem 1rem; background: #1e293b; color: #94a3b8;
+         font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 0.7rem 1rem; border-bottom: 1px solid #1e293b; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px;
+             font-size: 0.75rem; font-weight: 600; }
+    .running  { background: #14532d; color: #86efac; }
+    .stopped  { background: #450a0a; color: #fca5a5; }
+    .not-found { background: #1e293b; color: #94a3b8; }
+    .other    { background: #431407; color: #fed7aa; }
+    .actions { display: flex; gap: 0.4rem; }
+    button { padding: 0.3rem 0.7rem; border: none; border-radius: 4px; cursor: pointer;
+             font-size: 0.8rem; font-weight: 500; transition: opacity 0.15s; }
+    button:hover { opacity: 0.85; }
+    .btn-start   { background: #15803d; color: #fff; }
+    .btn-stop    { background: #b91c1c; color: #fff; }
+    .btn-rebuild { background: #1d4ed8; color: #fff; }
+    .global-actions { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+    .btn-global  { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; cursor: pointer;
+                   font-size: 0.9rem; font-weight: 600; transition: opacity 0.15s; }
+    .btn-global:hover { opacity: 0.85; }
+    .btn-rebuild-all { background: #7c3aed; color: #fff; }
+    .btn-ui-restart  { background: #0e7490; color: #fff; }
+    .checkout-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; }
+    .checkout-row input { background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+                          padding: 0.4rem 0.7rem; border-radius: 4px; width: 200px; }
+    .checkout-row button { background: #0f766e; color: #fff; padding: 0.4rem 1rem;
+                           border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem;
+             background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+             color: #e2e8f0; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s;
+             max-width: 340px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>SaltMiner Dev Environment</h1>
+  <p class="subtitle">Orchestration API — manages debug containers on the remote VM</p>
+
+  <div class="api-key-row">
+    <label for="apiKey">API Key:</label>
+    <input type="password" id="apiKey" placeholder="enter API key" autocomplete="off">
+  </div>
+
+  <div class="global-actions">
+    <button class="btn-global btn-rebuild-all" onclick="rebuildAll()">⟳ Rebuild All</button>
+    <button class="btn-global btn-ui-restart" onclick="restartUi()">↺ Restart UI (Vite)</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Container</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="serviceTable">
+      {% for svc in services %}
+      <tr id="row-{{ svc.name }}">
+        <td>{{ svc.name }}</td>
+        <td><code>{{ svc.container }}</code></td>
+        <td><span class="badge {{ svc.status if svc.status in ['running','stopped'] else ('not-found' if svc.status == 'not found' else 'other') }}">{{ svc.status }}</span></td>
+        <td>
+          <div class="actions">
+            <button class="btn-start"   onclick="callApi('POST','/api/services/{{ svc.name }}/start',   '{{ svc.name }} starting…')">Start</button>
+            <button class="btn-stop"    onclick="callApi('POST','/api/services/{{ svc.name }}/stop',    '{{ svc.name }} stopping…')">Stop</button>
+            <button class="btn-rebuild" onclick="callApi('POST','/api/services/{{ svc.name }}/rebuild', '{{ svc.name }} rebuilding… (may take a few minutes)')">Rebuild</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="checkout-row">
+    <label>Checkout branch:</label>
+    <input type="text" id="branchInput" placeholder="e.g. main">
+    <button onclick="checkoutBranch()">Checkout</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    function apiKey() { return document.getElementById('apiKey').value; }
+
+    function toast(msg, durationMs = 4000) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.opacity = '1';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.opacity = '0'; }, durationMs);
+    }
+
+    async function callApi(method, path, pendingMsg) {
+      toast(pendingMsg);
+      try {
+        const resp = await fetch(path, {
+          method,
+          headers: { 'X-API-Key': apiKey() },
+        });
+        const data = await resp.json();
+        if (resp.status === 401) { toast('❌ Invalid API key'); return; }
+        toast(data.ok !== false ? '✓ ' + path + ' — OK' : '✗ Error: ' + (data.error || 'unknown'), 6000);
+      } catch (e) {
+        toast('❌ Network error: ' + e.message);
+      }
+    }
+
+    async function rebuildAll() {
+      toast('Rebuilding all services… this may take several minutes');
+      try {
+        const resp = await fetch('/api/services/rebuild-all', {
+          method: 'POST',
+          headers: { 'X-API-Key': apiKey() },
+        });
+        const data = await resp.json();
+        const failed = Object.entries(data.builds || {}).filter(([, v]) => !v.built).map(([k]) => k);
+        if (failed.length) toast('✗ Build failed for: ' + failed.join(', '), 8000);
+        else toast('✓ All services rebuilt and started', 5000);
+      } catch (e) { toast('❌ ' + e.message); }
+    }
+
+    async function restartUi() {
+      toast('Restarting Vite dev server…');
+      try {
+        const resp = await fetch('/api/ui/restart', {
+          method: 'POST',
+          headers: { 'X-API-Key': apiKey() },
+        });
+        const data = await resp.json();
+        toast(data.ok ? '✓ UI restarted' : '✗ Error: ' + data.error, 5000);
+      } catch (e) { toast('❌ ' + e.message); }
+    }
+
+    async function checkoutBranch() {
+      const branch = document.getElementById('branchInput').value.trim();
+      if (!branch) { toast('Enter a branch name'); return; }
+      toast(`Checking out ${branch}…`);
+      try {
+        const resp = await fetch(`/api/repo/checkout/${encodeURIComponent(branch)}`, {
+          method: 'POST',
+          headers: { 'X-API-Key': apiKey() },
+        });
+        const data = await resp.json();
+        toast(data.ok ? `✓ Switched to ${branch}` : '✗ ' + (data.error || 'checkout failed'), 6000);
+      } catch (e) { toast('❌ ' + e.message); }
+    }
+  </script>
+</body>
+</html>
