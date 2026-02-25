@@ -1,0 +1,75 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach: api",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "dotnet",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "api"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceRoot}"
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceRoot}"
+      }
+    },
+    {
+      "name": "Attach: ui-api",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "dotnet",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "ui-api"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceRoot}"
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceRoot}"
+      }
+    },
+    {
+      "name": "Attach: sm-services",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "dotnet",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "services"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceRoot}"
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceRoot}"
+      }
+    },
+    {
+      "name": "Attach: jobmanager",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "dotnet",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "jobmanager"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceRoot}"
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceRoot}"
+      }
+    },
+    {
+      "name": "Debug: UI (Chrome / Edge)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceRoot}/src/SaltMiner.Ui",
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceRoot}/src/SaltMiner.Ui/*"
+      }
+    }
+  ]
+}
