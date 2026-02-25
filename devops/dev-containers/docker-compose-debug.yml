@@ -1,0 +1,76 @@
+# docker-compose-debug.yml
+# Debug environment override — extends docker-compose-local.yml.
+#
+# Usage (run from /opt/saltminer-dev/saltminer-setup):
+#   docker compose \
+#     -f docker-compose-local.yml \
+#     -f devops/dev-containers/docker-compose-debug.yml \
+#     up -d
+#
+# Or use the Flask orchestration API at http://localhost:8080
+#
+# ES/Kibana are NOT touched — they run from docker-compose-local.yml unchanged.
+# The 4 .NET services and smpgui are replaced with debug variants.
+
+services:
+  api:
+    image: saltminer-api-debug:latest
+    # container_name stays "api" (inherited) — required for vsdbg docker exec
+    volumes:
+      # Bind-mount source for vsdbg symbol resolution (read-only)
+      - /opt/saltminer-dev/saltminer:/src:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_ENABLE_DIAGNOSTICS=1
+
+  ui-api:
+    image: saltminer-ui-api-debug:latest
+    # container_name stays "ui-api" (inherited)
+    volumes:
+      - /opt/saltminer-dev/saltminer:/src:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_ENABLE_DIAGNOSTICS=1
+
+  sm-services:
+    image: saltminer-sm-services-debug:latest
+    # container_name stays "services" (inherited)
+    volumes:
+      - /opt/saltminer-dev/saltminer:/src:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_ENABLE_DIAGNOSTICS=1
+
+  jobmanager:
+    image: saltminer-jobmanager-debug:latest
+    # container_name stays "jobmanager" (inherited)
+    volumes:
+      - /opt/saltminer-dev/saltminer:/src:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_ENABLE_DIAGNOSTICS=1
+
+  # Replace the smpgui static-asset init container with a Vite dev server.
+  # TODO: Verify the path to the Vue.js source in the saltminer repo.
+  # Run: find /opt/saltminer-dev/saltminer -name "package.json" -not -path "*/node_modules/*"
+  smpgui:
+    image: node:20-alpine
+    container_name: smpgui
+    working_dir: /app
+    volumes:
+      # Bind-mount Vue.js source so Vite HMR picks up live edits
+      # TODO: Verify this path matches the Vue.js project root in saltminer
+      - /opt/saltminer-dev/saltminer/src/SaltMiner.Ui:/app
+    ports:
+      - "5173:5173"
+      - "9229:9229"
+    environment:
+      # Force polling-based file watch (required in Docker bind mounts on some hosts)
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_DEV_SERVER_PORT=5173
+    entrypoint: []
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    restart: "no"
+    depends_on: []
+    networks:
+      - ${CONTAINER_NETWORK}

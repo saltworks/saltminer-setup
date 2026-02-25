@@ -1,0 +1,19 @@
+[Unit]
+Description=SaltMiner Dev Orchestration API
+Documentation=https://github.com/saltworks/saltminer
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=<YOUR_VM_USER>
+WorkingDirectory=/opt/saltminer-dev-api
+EnvironmentFile=/opt/saltminer-dev-api/.env
+ExecStart=/usr/bin/python3 /opt/saltminer-dev-api/app.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
