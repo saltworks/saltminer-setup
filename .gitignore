@@ -1,2 +1,4 @@
 license.txt
 .claude
+__pycache__/
+.pytest_cache/
