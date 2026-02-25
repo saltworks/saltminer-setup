@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Prototype: Attach vsdbg over SSH",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "PrototypeTest",
+      "pipeTransport": {
+        "pipeCwd": "${workspaceRoot}",
+        "pipeProgram": "ssh",
+        "pipeArgs": [
+          "your-vm-hostname-or-ip",  // ← CHANGE THIS: hostname from ~/.ssh/config or IP address
+          "-T"                       // Disable pseudo-terminal allocation
+        ],
+        "debuggerPath": "/vsdbg/vsdbg",  // Path to vsdbg on the remote VM
+        "quoteArgs": false
+      },
+      "sourceFileMap": {
+        // Maps remote source path to local workspace
+        "/tmp/vsdbg-test/PrototypeTest": "${workspaceRoot}/prototype-test"
+      },
+      "justMyCode": false,        // Allow debugging into framework code
+      "requireExactSource": false  // Allow debugging even if source doesn't match exactly
+    }
+  ]
+}
