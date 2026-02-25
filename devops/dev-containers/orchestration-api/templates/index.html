@@ -72,9 +72,9 @@
         <td><span class="badge {{ svc.status if svc.status in ['running','stopped'] else ('not-found' if svc.status == 'not found' else 'other') }}">{{ svc.status }}</span></td>
         <td>
           <div class="actions">
-            <button class="btn-start"   onclick="callApi('POST','/api/services/{{ svc.name }}/start',   '{{ svc.name }} starting…')">Start</button>
-            <button class="btn-stop"    onclick="callApi('POST','/api/services/{{ svc.name }}/stop',    '{{ svc.name }} stopping…')">Stop</button>
-            <button class="btn-rebuild" onclick="callApi('POST','/api/services/{{ svc.name }}/rebuild', '{{ svc.name }} rebuilding… (may take a few minutes)')">Rebuild</button>
+            <button class="btn-start"   data-svc="{{ svc.name }}" data-action="start"   onclick="svcAction(this, '{{ svc.name }} starting…')">Start</button>
+            <button class="btn-stop"    data-svc="{{ svc.name }}" data-action="stop"    onclick="svcAction(this, '{{ svc.name }} stopping…')">Stop</button>
+            <button class="btn-rebuild" data-svc="{{ svc.name }}" data-action="rebuild" onclick="svcAction(this, '{{ svc.name }} rebuilding… (may take a few minutes)')">Rebuild</button>
           </div>
         </td>
       </tr>
@@ -101,6 +101,12 @@
       el._t = setTimeout(() => { el.style.opacity = '0'; }, durationMs);
     }
 
+    function svcAction(btn, pendingMsg) {
+      const name = btn.dataset.svc;
+      const action = btn.dataset.action;
+      callApi('POST', `/api/services/${encodeURIComponent(name)}/${action}`, pendingMsg);
+    }
+
     async function callApi(method, path, pendingMsg) {
       toast(pendingMsg);
       try {
@@ -108,9 +114,9 @@
           method,
           headers: { 'X-API-Key': apiKey() },
         });
-        const data = await resp.json();
         if (resp.status === 401) { toast('❌ Invalid API key'); return; }
-        toast(data.ok !== false ? '✓ ' + path + ' — OK' : '✗ Error: ' + (data.error || 'unknown'), 6000);
+        const data = await resp.json();
+        toast(data.ok === true ? '✓ ' + path + ' — OK' : '✗ Error: ' + (data.error || 'unknown'), 6000);
       } catch (e) {
         toast('❌ Network error: ' + e.message);
       }
