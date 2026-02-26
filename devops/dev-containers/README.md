@@ -46,31 +46,33 @@ curl -sSL https://aka.ms/getvsdbgsh | sudo bash /dev/stdin -v latest -l /vsdbg
 
 ### 5. Validate vsdbg-over-SSH (IMPORTANT — do this before containers)
 
-Before wiring up containers, confirm VS Code → SSH → vsdbg works:
+Before wiring up containers, confirm the core debugging pipeline works. This uses a standalone test .NET app to validate that VS Code can attach vsdbg through an SSH connection.
 
-```bash
-# On VM: create and run a test .NET app
-mkdir /tmp/vsdbg-test && cd /tmp/vsdbg-test
-dotnet new console
-dotnet run &   # note the PID
-```
+**See [PROTOTYPE-TEST.md](PROTOTYPE-TEST.md) for detailed, step-by-step instructions.**
 
-In VS Code (connected via Remote-SSH), create `/tmp/vsdbg-test/.vscode/launch.json`:
-```json
-{
-  "version": "0.2.0",
-  "configurations": [{
-    "name": "Test vsdbg",
-    "type": "coreclr",
-    "request": "attach",
-    "processId": "${command:pickProcess}"
-  }]
-}
-```
-Run "Test vsdbg" and confirm the debugger attaches to the dotnet process.
+Quick summary:
 
-If successful, the `launch.json` template in `vscode-templates/` is ready to use.
-If not, troubleshoot SSH connectivity and vsdbg path before proceeding.
+1. **On the VM**, create a simple test app:
+   ```bash
+   mkdir -p ~/vsdbg-prototype && cd ~/vsdbg-prototype
+   dotnet new console -n PrototypeTest && cd PrototypeTest
+   # Replace Program.cs with a loop (see PROTOTYPE-TEST.md)
+   dotnet build -c Debug
+   dotnet run -c Debug &  # Leave running
+   ```
+
+2. **On your workstation**, create a local workspace:
+   ```powershell
+   mkdir -p ~\vsdbg-prototype-test\prototype-test
+   code ~\vsdbg-prototype-test
+   # Copy launch.json.prototype-test to .vscode/launch.json and edit hostname
+   ```
+
+3. **Test debugging:** Press F5 → VS Code automatically initiates SSH connection → debugger should attach
+
+**Success criteria:** Breakpoint hits, variables are inspectable, step-over/into work correctly.
+
+If this test passes, the `pipeTransport` mechanism is validated and ready for production containers. If it fails, troubleshoot SSH connectivity and vsdbg installation using the detailed guide before proceeding.
 
 ### 6. Configure .csproj paths in Dockerfiles
 
