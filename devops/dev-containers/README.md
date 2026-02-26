@@ -44,7 +44,13 @@ git clone https://github.com/saltworks/saltminer /opt/saltminer-dev/saltminer
 curl -sSL https://aka.ms/getvsdbgsh | sudo bash /dev/stdin -v latest -l /vsdbg
 ```
 
-### 5. Validate vsdbg-over-SSH (IMPORTANT — do this before containers)
+### 5. Install venv for python
+
+```bash
+sudo apt install -y python3.12-venv
+```
+
+### 6. Validate vsdbg-over-SSH (IMPORTANT — do this before containers)
 
 Before wiring up containers, confirm the core debugging pipeline works. This uses a standalone test .NET app to validate that VS Code can attach vsdbg through an SSH connection.
 
@@ -76,39 +82,27 @@ If this test passes, the `pipeTransport` mechanism is validated and ready for pr
 
 ### 6. Configure .csproj paths in Dockerfiles
 
-The Dockerfiles are located in **this repo** (saltminer-setup) at `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/`. They contain `# TODO: Verify .csproj path` comments. Open each Dockerfile and replace the placeholder paths with the correct paths found in the **saltminer source repo** at `/opt/saltminer-dev/saltminer/`.
+The Dockerfiles are located in **this repo** (saltminer-setup) at `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/`. They contain `# TODO: Verify .csproj path` comments. Open each Dockerfile and verify the paths are correct.
 
-Files to edit:
-- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.api` → find path to `Saltworks.SaltMiner.DataApi.csproj` in saltminer repo
-- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.ui-api` → find `Saltworks.SaltMiner.Ui.Api.csproj`
-- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.sm-services` → find `Saltworks.SaltMiner.ServiceManager.csproj`
-- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.jobmanager` → find `Saltworks.SaltMiner.JobManager.csproj`
-- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/docker-compose-debug.yml` → find the Vue.js project root (contains `package.json`)
-
-```bash
-# Search the saltminer source repo for the correct paths
-find /opt/saltminer-dev/saltminer -name "*.csproj" | sort
-find /opt/saltminer-dev/saltminer -name "package.json" -not -path "*/node_modules/*"
-```
-
-**Example:** If you find `Saltworks.SaltMiner.DataApi.csproj` at `/opt/saltminer-dev/saltminer/src/DataApi/Saltworks.SaltMiner.DataApi.csproj`, update the `RUN dotnet publish` line in `Dockerfile.debug.api` to use `src/DataApi/Saltworks.SaltMiner.DataApi.csproj` (path relative to the saltminer repo root, since that's the Docker build context).
+**Example:** If `Saltworks.SaltMiner.DataApi.csproj` is at `/opt/saltminer-dev/saltminer/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj`, verify the `RUN dotnet publish` line in `Dockerfile.debug.api` to use `Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj` (path relative to the saltminer repo root, since that's the Docker build context).
 
 ### 7. Deploy Flask orchestration API
 
 ```bash
-cp -r /opt/saltminer-dev/saltminer-setup/devops/dev-containers/orchestration-api /opt/saltminer-dev-api
-cd /opt/saltminer-dev-api
+cp -r /opt/saltminer-dev/saltminer-setup/devops/dev-containers/orchestration-api /opt/saltminer-dev/control-api
+cd /opt/saltminer-dev/control-api
+python3 -m pip venv .venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 
 # Create .env from example
-cp .env.example .env
+mv .env.example .env
 # Edit .env: set a strong API_KEY and verify image versions match saltminer-setup/.env
 nano .env
 
 # Install and start systemd service
-# Edit saltminer-dev-api.service: replace <YOUR_VM_USER> with your username
-sed -i "s/<YOUR_VM_USER>/$USER/" saltminer-dev-api.service
 sudo cp saltminer-dev-api.service /etc/systemd/system/
+sudo chmod 755 run-api.sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now saltminer-dev-api
 

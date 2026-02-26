@@ -10,7 +10,9 @@
 # Or use the Flask orchestration API at http://localhost:8080
 #
 # ES/Kibana are NOT touched — they run from docker-compose-local.yml unchanged.
-# The 4 .NET services and smpgui are replaced with debug variants.
+# The 5 .NET services and smpgui are replaced with debug variants.
+# Note: Manager and SyncAgent are declarative tools and run locally on the workstation
+# for direct debugging while calling remote APIs.
 
 services:
   api:
@@ -34,12 +36,41 @@ services:
 
   sm-services:
     image: saltminer-sm-services-debug:latest
+    # Hybrid build: compiles ServiceManager from Debug source but layers on production base
+    # (production base has Python integration, custom scripts, and other dependencies)
     # container_name stays "services" (inherited)
     volumes:
+      # Production configuration mounts (from original docker-compose-local.yml)
+      - type: bind
+        source: /etc/saltworks/saltminer/agent/SourceConfigs
+        target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
+      - type: bind
+        source: /etc/saltworks/saltminer/python/Elastic.json
+        target: /Elastic.json
+      - type: bind
+        source: /etc/saltworks/saltminer/python/saltworks.key
+        target: /etc/saltworks/saltminer-2.5.0/saltworks.key
+      - type: bind
+        source: /etc/saltworks/saltminer/python/Sources
+        target: /etc/saltworks/saltminer-2.5.0/Sources
+      - type: bind
+        source: /etc/saltworks/saltminer/servicemanager/ServiceManagerSettings.json
+        target: /etc/saltworks/saltminer-3.0.0/servicemanager/ServiceManagerSettings.json
+      - type: bind
+        source: /usr/share/saltworks/saltminer/python/Custom
+        target: /usr/share/saltworks/saltminer-2.5.0/Custom
+      - services-logs:/var/log/saltworks/saltminer-3.0.0
+      - agent25-logs:/var/log/saltworks/saltminer-2.5.0
+      - type: bind
+        source: /etc/saltworks/saltminer/manager/ManagerSettings.json
+        target: /etc/saltworks/saltminer-3.0.0/manager/ManagerSettings.json
+      # Debug: bind-mount source for vsdbg symbol resolution (read-only)
       - /opt/saltminer-dev/saltminer:/src:ro
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_ENABLE_DIAGNOSTICS=1
+      - ELASTIC_URL=${ELASTICSEARCH_URL}
+      - ELASTIC_PWD=${ELASTIC_PASSWORD}
 
   jobmanager:
     image: saltminer-jobmanager-debug:latest
@@ -50,10 +81,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_ENABLE_DIAGNOSTICS=1
 
-  # Replace the smpgui static-asset init container with a Vite dev server.
-  # TODO: Verify the path to the Vue.js source in the saltminer repo.
-  # Run: find /opt/saltminer-dev/saltminer -name "package.json" -not -path "*/node_modules/*"
   smpgui:
+    # Vite dev server with HMR: runs Vue.js frontend from source
+    # Each code change triggers live-reload in the browser (no rebuild/restart needed)
     image: node:20-alpine
     container_name: smpgui
     working_dir: /app
