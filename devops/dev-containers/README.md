@@ -76,19 +76,22 @@ If this test passes, the `pipeTransport` mechanism is validated and ready for pr
 
 ### 6. Configure .csproj paths in Dockerfiles
 
-The Dockerfiles contain `# TODO: Verify .csproj path` comments. Open each Dockerfile and replace the placeholder paths with the correct paths from the saltminer repo:
+The Dockerfiles are located in **this repo** (saltminer-setup) at `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/`. They contain `# TODO: Verify .csproj path` comments. Open each Dockerfile and replace the placeholder paths with the correct paths found in the **saltminer source repo** at `/opt/saltminer-dev/saltminer/`.
 
-- `Dockerfile.debug.api` → find `Saltworks.SaltMiner.DataApi.csproj`
-- `Dockerfile.debug.ui-api` → find `Saltworks.SaltMiner.Ui.Api.csproj`
-- `Dockerfile.debug.sm-services` → find `Saltworks.SaltMiner.ServiceManager.csproj`
-- `Dockerfile.debug.jobmanager` → find `Saltworks.SaltMiner.JobManager.csproj`
-- `docker-compose-debug.yml` → find the Vue.js project root (contains `package.json`)
+Files to edit:
+- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.api` → find path to `Saltworks.SaltMiner.DataApi.csproj` in saltminer repo
+- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.ui-api` → find `Saltworks.SaltMiner.Ui.Api.csproj`
+- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.sm-services` → find `Saltworks.SaltMiner.ServiceManager.csproj`
+- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.jobmanager` → find `Saltworks.SaltMiner.JobManager.csproj`
+- `/opt/saltminer-dev/saltminer-setup/devops/dev-containers/docker-compose-debug.yml` → find the Vue.js project root (contains `package.json`)
 
 ```bash
-# Quick search in the saltminer repo
+# Search the saltminer source repo for the correct paths
 find /opt/saltminer-dev/saltminer -name "*.csproj" | sort
 find /opt/saltminer-dev/saltminer -name "package.json" -not -path "*/node_modules/*"
 ```
+
+**Example:** If you find `Saltworks.SaltMiner.DataApi.csproj` at `/opt/saltminer-dev/saltminer/src/DataApi/Saltworks.SaltMiner.DataApi.csproj`, update the `RUN dotnet publish` line in `Dockerfile.debug.api` to use `src/DataApi/Saltworks.SaltMiner.DataApi.csproj` (path relative to the saltminer repo root, since that's the Docker build context).
 
 ### 7. Deploy Flask orchestration API
 

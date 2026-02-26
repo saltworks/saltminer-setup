@@ -1,29 +1,34 @@
 # Dockerfile.debug.sm-services
-# Hybrid debug image: compiles ServiceManager in Debug mode, layers onto prod base.
+# Hybrid debug image: compiles ServiceManager in Debug mode, layers onto production base.
 # Build context: /opt/saltminer-dev/saltminer
+# 
+# ServiceManager uses the production base image because it has additional runtime
+# dependencies and system configuration not present in the base aspnet:8.0 image.
+# 
 # Note: ServiceManager spawns additional .NET processes. Each spawned process can
-# also be attached independently via "docker exec services /vsdbg/vsdbg ..."
+# also be attached independently via "docker exec sm-sm-services /vsdbg/vsdbg ..."
 
 # ── Stage 1: Debug build from source ─────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-# TODO: Verify the correct .csproj path in your saltminer repository.
-RUN dotnet publish src/Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager.csproj \
+RUN dotnet publish Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager.csproj \
     --configuration Debug \
     --output /app/debug \
     --no-self-contained
 
-# ── Stage 2: Layer debug artifacts onto production base ───────────────────────
+# ── Stage 2: Layer debug artifacts onto production base ──────────────────────
 ARG SM_SERVICES_IMAGE_VERSION=latest
 FROM docker.io/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
 WORKDIR /usr/share/saltworks/saltminer-3.0.0/servicemanager
 
-COPY --from=build /app/debug/ .
-
+# Install vsdbg FIRST (this layer caches well since it rarely changes)
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip bash \
- && curl -sSL https://aka.ms/getvsdbg | bash /dev/stdin -u vsdbg -l /vsdbg \
+ && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg \
  && rm -rf /var/lib/apt/lists/*
+
+# Replace production DLLs with debug artifacts LAST (this layer rebuilds with each code change)
+COPY --from=build /app/debug/ .
 
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_ENABLE_DIAGNOSTICS=1

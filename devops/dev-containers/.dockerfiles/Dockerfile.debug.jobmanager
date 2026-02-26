@@ -1,27 +1,29 @@
 # Dockerfile.debug.jobmanager
-# Hybrid debug image: compiles JobManager in Debug mode, layers onto prod base.
+# Standalone debug image: compiles JobManager in Debug mode with vsdbg for remote debugging.
 # Build context: /opt/saltminer-dev/saltminer
 
 # ── Stage 1: Debug build from source ─────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-# TODO: Verify the correct .csproj path in your saltminer repository.
-RUN dotnet publish src/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
+RUN dotnet publish Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
     --configuration Debug \
     --output /app/debug \
     --no-self-contained
 
-# ── Stage 2: Layer debug artifacts onto production base ───────────────────────
-ARG SM_JOBMANAGER_IMAGE_VERSION=latest
-FROM docker.io/saltworks/saltminer:${SM_JOBMANAGER_IMAGE_VERSION}
-WORKDIR /usr/share/saltworks/saltminer-3.0.0/jobmanager
+# ── Stage 2: Runtime with vsdbg ──────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
 
-COPY --from=build /app/debug/ .
-
+# Install vsdbg FIRST (this layer caches well since it rarely changes)
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip bash \
- && curl -sSL https://aka.ms/getvsdbg | bash /dev/stdin -u vsdbg -l /vsdbg \
+ && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg \
  && rm -rf /var/lib/apt/lists/*
+
+# Copy debug artifacts LAST (this layer rebuilds with each code change)
+COPY --from=build /app/debug/ .
 
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_ENABLE_DIAGNOSTICS=1
+
+ENTRYPOINT ["dotnet", "Saltworks.SaltMiner.JobManager.dll"]

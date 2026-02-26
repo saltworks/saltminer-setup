@@ -1,36 +1,36 @@
 # Dockerfile.debug.api
-# Hybrid debug image: compiles DataApi in Debug mode from source, layers onto prod base.
+# Standalone debug image: compiles DataApi in Debug mode with vsdbg for remote debugging.
 # Build context: /opt/saltminer-dev/saltminer (the saltminer source repo)
 # Build command (handled by Flask orchestration API):
 #   docker build \
-#     -f devops/dev-containers/.dockerfiles/Dockerfile.debug.api \
-#     --build-arg SM_API_IMAGE_VERSION=<version> \
+#     -f /opt/saltminer-dev/saltminer-setup/devops/dev-containers/.dockerfiles/Dockerfile.debug.api \
 #     -t saltminer-api-debug:latest \
 #     /opt/saltminer-dev/saltminer
 
 # ── Stage 1: Debug build from source ─────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-# TODO: Verify the correct .csproj path in your saltminer repository.
-# Run: find /opt/saltminer-dev/saltminer -name "*.csproj" | sort
-RUN dotnet publish src/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
+RUN dotnet publish Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
     --configuration Debug \
     --output /app/debug \
     --no-self-contained
 
-# ── Stage 2: Layer debug artifacts onto production base ───────────────────────
-ARG SM_API_IMAGE_VERSION=latest
-FROM docker.io/saltworks/saltminer:${SM_API_IMAGE_VERSION}
-WORKDIR /usr/share/saltworks/saltminer-3.0.0/api
+# ── Stage 2: Runtime with vsdbg ──────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
 
-# Replace production DLLs and PDBs with debug build artifacts
-COPY --from=build /app/debug/ .
-
-# Install vsdbg for remote debugging via VS Code pipeTransport
+# Install vsdbg FIRST (this layer caches well since it rarely changes)
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip bash \
- && curl -sSL https://aka.ms/getvsdbg | bash /dev/stdin -u vsdbg -l /vsdbg \
+ && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg \
  && rm -rf /var/lib/apt/lists/*
+
+# Copy debug artifacts LAST (this layer rebuilds with each code change)
+COPY --from=build /app/debug/ .
 
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV DOTNET_ENABLE_DIAGNOSTICS=1
+ENV ASPNETCORE_URLS=http://+:5000
+
+EXPOSE 5000
+ENTRYPOINT ["dotnet", "Saltworks.SaltMiner.DataApi.dll"]
