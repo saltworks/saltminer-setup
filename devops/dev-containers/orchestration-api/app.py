@@ -42,19 +42,12 @@ def build_service_image(name):
     """Build the debug Docker image for a .NET service. Returns subprocess.CompletedProcess."""
     dockerfile = DOCKERFILE_MAP[name]
     image = DEBUG_IMAGE_MAP[name]
-    arg_name, arg_value = VERSION_ARG_MAP[name]
-    return subprocess.run(
-        [
-            "docker", "build",
-            "-f", dockerfile,
-            "-t", image,
-            "--build-arg", f"{arg_name}={arg_value}",
-            SALTMINER_REPO,
-        ],
-        capture_output=True,
-        text=True,
-        timeout=600,
-    )
+    cmd = ["docker", "build", "-f", dockerfile, "-t", image]
+    if name in VERSION_ARG_MAP:
+        arg_name, arg_value = VERSION_ARG_MAP[name]
+        cmd += ["--build-arg", f"{arg_name}={arg_value}"]
+    cmd.append(SALTMINER_REPO)
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=600)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────

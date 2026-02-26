@@ -89,15 +89,21 @@ The Dockerfiles are located in **this repo** (saltminer-setup) at `/opt/saltmine
 ### 7. Deploy Flask orchestration API
 
 ```bash
+# Create the dedicated service account used by saltminer-dev-api.service
+sudo useradd -r -s /bin/false -d /opt/saltminer-dev/control-api saltminer
+# Add saltminer to the docker group so it can run docker commands
+sudo usermod -aG docker saltminer
+
 cp -r /opt/saltminer-dev/saltminer-setup/devops/dev-containers/orchestration-api /opt/saltminer-dev/control-api
+sudo chown -R saltminer:saltminer /opt/saltminer-dev/control-api
 cd /opt/saltminer-dev/control-api
-python3 -m pip venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip3 install -r requirements.txt
 
 # Create .env from example
 mv .env.example .env
-# Edit .env: set a strong API_KEY and verify image versions match saltminer-setup/.env
+# Edit .env: set a strong API_KEY and set SM_SERVICES_IMAGE_VERSION to match saltminer-setup/.env
 nano .env
 
 # Install and start systemd service
@@ -113,12 +119,11 @@ curl http://localhost:8080/api/status
 
 ### 8. Start stable infrastructure (Elasticsearch + Kibana)
 
-Follow the standard setup from the main `README.md` for initial ES/Kibana startup.
+ELK runs from its own compose file (`devops/dev-containers/docker-compose-elk.yml`) so versions can be updated independently from the application services.
 
 ```bash
 cd /opt/saltminer-dev/saltminer-setup
-# Run only ES + Kibana from the local compose (they remain stable)
-docker compose -f docker-compose-local.yml up setup es01 kibana -d
+docker compose -f devops/dev-containers/docker-compose-elk.yml up setup es01 kibana -d
 ```
 
 ### 9. Build and start debug services

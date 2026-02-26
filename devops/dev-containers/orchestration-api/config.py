@@ -47,11 +47,10 @@ DOCKERFILE_MAP = {
     # smpgui uses node:20-alpine directly — no custom Dockerfile to build
 }
 
-# Version build-args for each service's base image
-# These should match the versions in .env
+# Version build-args for services that layer onto a versioned production base image.
+# api, ui-api, and jobmanager use mcr.microsoft.com/dotnet/aspnet:8.0 directly
+# and need no build-arg. sm-services layers onto the production image (which includes
+# Python integration and other runtime dependencies) and requires the version arg.
 VERSION_ARG_MAP = {
-    "api": ("SM_API_IMAGE_VERSION", os.getenv("SM_API_IMAGE_VERSION", "latest")),
-    "ui-api": ("SM_UI_API_IMAGE_VERSION", os.getenv("SM_UI_API_IMAGE_VERSION", "latest")),
     "sm-services": ("SM_SERVICES_IMAGE_VERSION", os.getenv("SM_SERVICES_IMAGE_VERSION", "latest")),
-    "jobmanager": ("SM_JOBMANAGER_IMAGE_VERSION", os.getenv("SM_JOBMANAGER_IMAGE_VERSION", "latest")),
 }
