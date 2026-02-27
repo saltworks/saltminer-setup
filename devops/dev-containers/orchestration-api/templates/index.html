@@ -35,6 +35,7 @@
     .btn-global:hover { opacity: 0.85; }
     .btn-rebuild-all { background: #7c3aed; color: #fff; }
     .btn-ui-restart  { background: #0e7490; color: #fff; }
+    .btn-refresh     { background: #334155; color: #e2e8f0; }
     .checkout-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 1.5rem; }
     .checkout-row input { background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
                           padding: 0.4rem 0.7rem; border-radius: 4px; width: 200px; }
@@ -58,6 +59,7 @@
   <div class="global-actions">
     <button class="btn-global btn-rebuild-all" onclick="rebuildAll()">⟳ Rebuild All</button>
     <button class="btn-global btn-ui-restart" onclick="restartUi()">↺ Restart UI (Vite)</button>
+    <button class="btn-global btn-refresh" onclick="refreshStatus()">↻ Refresh</button>
   </div>
 
   <table>
@@ -91,6 +93,27 @@
   <div id="toast"></div>
 
   <script>
+    // ── Session cookie helpers ────────────────────────────────────────────────
+    function getCookie(name) {
+      const m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+      return m ? decodeURIComponent(m[1]) : '';
+    }
+    function setCookie(name, value) {
+      // Session cookie (no max-age/expires) — cleared when browser session ends
+      document.cookie = name + '=' + encodeURIComponent(value) + '; path=/; SameSite=Strict';
+    }
+
+    // Pre-populate API key from session cookie on load
+    (function () {
+      const saved = getCookie('apiKey');
+      if (saved) document.getElementById('apiKey').value = saved;
+    })();
+
+    // Persist API key to session cookie whenever the input changes
+    document.getElementById('apiKey').addEventListener('input', function () {
+      setCookie('apiKey', this.value);
+    });
+
     function apiKey() { return document.getElementById('apiKey').value; }
 
     function toast(msg, durationMs = 4000) {
@@ -153,6 +176,22 @@
         if (data === null) return;
         toast(data.ok ? '✓ UI restarted' : '✗ Error: ' + data.error, 5000);
       } catch (e) { toast('❌ ' + e.message); }
+    }
+
+    async function refreshStatus() {
+      try {
+        const resp = await fetch('/api/services');
+        const services = await resp.json();
+        const statusMap = { running: 'running', stopped: 'stopped', 'not found': 'not-found' };
+        services.forEach(({ name, status }) => {
+          const row = document.getElementById('row-' + name);
+          if (!row) return;
+          const badge = row.querySelector('.badge');
+          if (!badge) return;
+          badge.textContent = status;
+          badge.className = 'badge ' + (statusMap[status] || 'other');
+        });
+      } catch (e) { toast('❌ Refresh failed: ' + e.message); }
     }
 
     async function checkoutBranch() {
