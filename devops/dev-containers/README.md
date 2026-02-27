@@ -121,6 +121,8 @@ curl http://localhost:8080/api/status
 
 ELK runs from its own compose file (`devops/dev-containers/docker-compose-elk.yml`) so versions can be updated independently from the application services.
 
+Before starting ELK components, edit file (`devops/dev-containers/.env`) and set the KIBANA_URL variable to the public kibana URL needed for the stack.
+
 ```bash
 cd /opt/saltminer-dev/saltminer-setup
 docker compose \
@@ -178,9 +180,22 @@ In VS Code:
 3. Set breakpoints in source files
 4. Trigger an API call — breakpoint should hit
 
+### Access SaltMiner UI and APIs via nginx
+
+Nginx is included in the ELK stack (`docker-compose-elk.yml`) and reverse-proxies all services on port 80:
+
+| Path | Target |
+|------|--------|
+| `http://localhost/` | Kibana |
+| `http://localhost/smapi/` | DataApi |
+| `http://localhost/smuiapi/` | UiApi |
+| `http://localhost/smpgui/` | Vite dev server (with HMR) |
+
+This is the entry point for Manager and SyncAgent testing — configure those tools to point at `http://localhost/smapi/` and `http://localhost/smuiapi/`.
+
 ### Debug Vue.js frontend
 
-1. Ensure `smpgui` (Vite) is running — navigate to `http://localhost:5173`
+1. Ensure `smpgui` (Vite) is running — navigate to `http://localhost/smpgui/` (via nginx) or `http://localhost:5173` (direct)
 2. In VS Code Run & Debug → "Debug: UI (Chrome / Edge)"
 3. Set breakpoints in `.vue` or `.ts` files
 

@@ -138,7 +138,6 @@ services:
     volumes:
     - certs:/usr/share/kibana/config/certs
     - kibanadata:/usr/share/kibana/data
-    - /etc/saltworks/saltminer/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -168,42 +167,19 @@ services:
           /usr/local/bin/kibana-docker
         '
 
-  elastic-agent:
-    image: docker.elastic.co/elastic-agent/elastic-agent:${STACK_VERSION}
-    container_name: elastic-agent
-    hostname: ${ELASTIC_AGENT_HOSTNAME}
-    restart: on-failure:10
-    user: root # note, synthetic browser monitors require this set to `elastic-agent`
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    depends_on:
+      kibana:
+        condition: service_started
+    ports:
+    - "80:80"
     volumes:
-    - services-logs:/var/log/saltworks/saltminer-3.0.0/services
-    - api-logs:/var/log/saltworks/saltminer-3.0.0/api
-    - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0/jobmanager
-    - agent25-logs:/var/log/saltworks/saltminer-2.5.0
-    - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
-    environment:
-    - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
-    - FLEET_ENROLL=1
-    - FLEET_URL=${FLEET_SERVER_URL}
-    - FLEET_INSECURE=1
+    - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
     networks:
     - ${CONTAINER_NETWORK}
-    deploy:
-      resources:
-        limits:
-          memory: 1gb
-        reservations:
-          memory: 500mb
-    depends_on:
-      api:
-        condition: service_healthy
-      ui-api:
-        condition: service_healthy
-      sm-services:
-        condition: service_started
-      jobmanager:
-        condition: service_started
-    profiles:
-    - fleet
+    restart: "always"
 
 volumes:
   certs:
