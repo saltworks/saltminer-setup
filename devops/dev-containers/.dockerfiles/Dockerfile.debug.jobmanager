@@ -6,7 +6,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-RUN dotnet publish Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
+RUN find . -type d \( -name "bin" -o -name "obj" \) -prune -exec rm -rf {} \; ; \
+    dotnet publish Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
     --configuration Debug \
     --output /app/debug \
     --no-self-contained

@@ -128,7 +128,7 @@ cd /opt/saltminer-dev/saltminer-setup
 docker compose \
   --env-file devops/dev-containers/.env \
   -f devops/dev-containers/docker-compose-elk.yml \
-  up setup es01 kibana -d
+  up setup es01 kibana nginx -d
 ```
 
 ### 9. Build and start debug services

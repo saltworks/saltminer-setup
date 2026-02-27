@@ -11,7 +11,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-RUN dotnet publish Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
+# Remove any stale build artifacts copied from the host (bin/, obj/).
+# Without this, NETSDK1152 fires when publish finds duplicate .xml paths
+# (source-level doc XML vs. bin/Debug/net8.0/ XML from a prior local build).
+RUN find . -type d \( -name "bin" -o -name "obj" \) -prune -exec rm -rf {} \; ; \
+    dotnet publish Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
     --configuration Debug \
     --output /app/debug \
     --no-self-contained
