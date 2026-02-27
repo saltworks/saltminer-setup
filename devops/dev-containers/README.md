@@ -123,7 +123,10 @@ ELK runs from its own compose file (`devops/dev-containers/docker-compose-elk.ym
 
 ```bash
 cd /opt/saltminer-dev/saltminer-setup
-docker compose -f devops/dev-containers/docker-compose-elk.yml up setup es01 kibana -d
+docker compose \
+  --env-file devops/dev-containers/.env \
+  -f devops/dev-containers/docker-compose-elk.yml \
+  up setup es01 kibana -d
 ```
 
 ### 9. Build and start debug services

@@ -24,6 +24,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_ENABLE_DIAGNOSTICS=1
+      - ELASTIC_URL=https://es01:9200
 
   ui-api:
     image: saltminer-ui-api-debug:latest
@@ -69,7 +70,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DOTNET_ENABLE_DIAGNOSTICS=1
-      - ELASTIC_URL=${ELASTICSEARCH_URL}
+      - ELASTIC_URL=https://es01:9200
       - ELASTIC_PWD=${ELASTIC_PASSWORD}
 
   jobmanager:
