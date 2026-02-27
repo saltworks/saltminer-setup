@@ -2,7 +2,10 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from the same directory as this file, regardless of working directory.
+# Plain load_dotenv() searches from cwd, which may differ when run via systemd.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(_HERE, ".env"))
 
 # ── VM paths ──────────────────────────────────────────────────────────────────
 SETUP_REPO = os.getenv("SETUP_REPO", "/opt/saltminer-dev/saltminer-setup")
@@ -52,5 +55,6 @@ DOCKERFILE_MAP = {
 # and need no build-arg. sm-services layers onto the production image (which includes
 # Python integration and other runtime dependencies) and requires the version arg.
 VERSION_ARG_MAP = {
-    "sm-services": ("SM_SERVICES_IMAGE_VERSION", os.getenv("SM_SERVICES_IMAGE_VERSION", "latest")),
+    # os.getenv default only fires when the key is absent; `or` also catches empty string
+    "sm-services": ("SM_SERVICES_IMAGE_VERSION", os.getenv("SM_SERVICES_IMAGE_VERSION") or "latest"),
 }

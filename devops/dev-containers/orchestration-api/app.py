@@ -2,6 +2,7 @@
 import subprocess
 
 from flask import Flask, abort, jsonify, render_template, request
+from werkzeug.exceptions import HTTPException
 
 from config import (
     ALL_DEBUG_SERVICES,
@@ -15,6 +16,14 @@ from config import (
 )
 
 app = Flask(__name__)
+
+
+# ── Error handlers ────────────────────────────────────────────────────────────
+
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    """Return JSON instead of Flask's default HTML error pages."""
+    return jsonify({"ok": False, "error": e.description}), e.code
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
