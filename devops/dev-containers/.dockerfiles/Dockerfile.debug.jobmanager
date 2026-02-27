@@ -6,11 +6,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-RUN find . -type d \( -name "bin" -o -name "obj" \) -prune -exec rm -rf {} \; ; \
-    dotnet publish Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
+RUN dotnet publish Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager/Saltworks.SaltMiner.JobManager.csproj \
     --configuration Debug \
     --output /app/debug \
-    --no-self-contained
+    --no-self-contained \
+    -p:GenerateDocumentationFile=false
 
 # ── Stage 2: Runtime with vsdbg ──────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0

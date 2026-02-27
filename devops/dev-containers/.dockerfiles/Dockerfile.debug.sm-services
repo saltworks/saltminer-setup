@@ -12,11 +12,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-RUN find . -type d \( -name "bin" -o -name "obj" \) -prune -exec rm -rf {} \; ; \
-    dotnet publish Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager.csproj \
+RUN dotnet publish Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager/Saltworks.SaltMiner.ServiceManager.csproj \
     --configuration Debug \
     --output /app/debug \
-    --no-self-contained
+    --no-self-contained \
+    -p:GenerateDocumentationFile=false
 
 # ── Stage 2: Layer debug artifacts onto production base ──────────────────────
 ARG SM_SERVICES_IMAGE_VERSION=latest

@@ -11,14 +11,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /opt/saltminer-dev/saltminer
 COPY . .
-# Remove any stale build artifacts copied from the host (bin/, obj/).
-# Without this, NETSDK1152 fires when publish finds duplicate .xml paths
-# (source-level doc XML vs. bin/Debug/net8.0/ XML from a prior local build).
-RUN find . -type d \( -name "bin" -o -name "obj" \) -prune -exec rm -rf {} \; ; \
-    dotnet publish Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
+# /p:GenerateDocumentationFile=false prevents NETSDK1152:
+# Some projects (e.g. ElasticClient) have a .xml doc file committed at the project root.
+# The build would also generate one in bin/Debug/net8.0/, giving two files with the same
+# publish-output name. Suppressing doc generation avoids that conflict.
+RUN dotnet publish Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi/Saltworks.SaltMiner.DataApi.csproj \
     --configuration Debug \
     --output /app/debug \
-    --no-self-contained
+    --no-self-contained \
+    -p:GenerateDocumentationFile=false
 
 # ── Stage 2: Runtime with vsdbg ──────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
