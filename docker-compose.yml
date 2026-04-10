@@ -100,7 +100,7 @@ services:
       #else
       #  echo "No extra ingest pipelines to process."
       #fi;
-      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/api/Saltworks.SaltMiner.DataApi.dll
+      /usr/bin/dotnet /opt/saltworks/saltminer/app/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
