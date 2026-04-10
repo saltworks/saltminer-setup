@@ -78,7 +78,7 @@ services:
     - "${DISCOVERY_SEED_HOSTS:-ES_SM_NOSEEDHOSTS}=es02,es03"
     - "${CLUSTER_INITIAL_MASTER_NODES:-ES_SM_NOMASTERNODES}=es01,es02,es03"
     - ingest.geoip.downloader.enabled=false
-    - bootstrap.memory_lock=true 
+    - bootstrap.memory_lock=true
     - xpack.security.enabled=true
     - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
     - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
@@ -167,7 +167,7 @@ services:
           fi;
           /usr/local/bin/kibana-docker
         '
-  proxy:
+  sm-nginx:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_NGINX_IMAGE_VERSION}
     container_name: sm-nginx
     ports:
@@ -175,22 +175,13 @@ services:
     - "443:443"
     volumes:
     - type: bind
-      source: /etc/saltworks/saltminer/nginx/nginx.conf
-      #target: /etc/nginx/nginx.conf
-      target: /nginx.conf
-      read_only: true
-    - type: bind
-      source: /etc/saltworks/saltminer/nginx/saltminer.crt
-      target: /etc/nginx/saltminer.crt
-      read_only: true
-    - type: bind
-      source: /etc/saltworks/saltminer/nginx/saltminer.key
-      target: /etc/nginx/saltminer.key
-      read_only: true
+      source: /etc/saltworks/saltminer/nginx/
+      target: /opt/saltworks/saltminer/nginx/
+#      read_only: true
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
-    #- .env:/usr/share/nginx/html/version/env.txt
     environment:
     - KIBANA_URL=${KIBANA_URL}
+    - KIBANA_HOST=${KIBANA_HOST}
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -288,7 +279,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-       
+
   sm-services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
     container_name: services
