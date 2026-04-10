@@ -7,18 +7,9 @@ services:
     - "443:443"
     volumes:
     - type: bind
-      source: /etc/saltworks/saltminer/nginx/nginx.conf
-      #target: /etc/nginx/nginx.conf
-      target: /nginx.conf
-      read_only: true
-    - type: bind
-      source: /etc/saltworks/saltminer/nginx/saltminer.crt
-      target: /etc/nginx/saltminer.crt
-      read_only: true
-    - type: bind
-      source: /etc/saltworks/saltminer/nginx/saltminer.key
-      target: /etc/nginx/saltminer.key
-      read_only: true
+      source: ${INSTALL_PATH}/nginx/
+      target: /opt/saltworks/saltminer/nginx/
+#      read_only: true
     - smpgui-assets:/usr/share/saltworks/saltminer-3.0.0/ui-web
     #- .env:/usr/share/nginx/html/version/env.txt
     environment:
@@ -58,11 +49,11 @@ services:
     - "5000"
     volumes:
     - type: bind
-      source: /etc/saltworks/saltminer/api/appsettings.json
+      source: ${INSTALL_PATH}/config/api/appsettings.json
       target: /appsettings.json
-    - api-logs:/var/log/saltworks/saltminer-3.0.0
+    - api-logs:/var/log/saltworks/saltminer
     #- type: bind
-    #  source: /etc/saltworks/saltminer/data-templates
+    #  source: ${INSTALL_PATH}/data-templates
     #  target: /data-templates
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
@@ -91,16 +82,16 @@ services:
     - |
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
-        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        #cp /appsettings.json ${INSTALL_PATH}/ui-api/appsettings.json
         ./config-api.sh
       fi;
       #if [ "$(ls -A /data-templates/ingest-pipelines)" ]; then
       #  echo "Files exist in the ingest-pipelines directory."
-      #  cp /data-templates/ingest-pipelines/*  /usr/share/saltworks/saltminer-3.0.0/api/data/ingest-pipelines/
+      #  cp /data-templates/ingest-pipelines/*  /usr/share/saltworks/saltminer/api/data/ingest-pipelines/
       #else
       #  echo "No extra ingest pipelines to process."
       #fi;
-      /usr/bin/dotnet /opt/saltworks/saltminer/app/api/Saltworks.SaltMiner.DataApi.dll
+      /usr/bin/dotnet /${INSTALL_PATH}/app/api/Saltworks.SaltMiner.DataApi.dll
 
   ui-api:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_UI_API_IMAGE_VERSION}
@@ -109,10 +100,10 @@ services:
     expose:
     - "5001"
     volumes:
-    - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
-    - ui-api-logs:/var/log/saltworks/saltminer-3.0.0
+    - ui-files:/usr/share/saltworks/saltminer/ui-files
+    - ui-api-logs:/var/log/saltworks/saltminer
     - type: bind
-      source: /etc/saltworks/saltminer/ui-api/appsettings.json
+      source: ${INSTALL_PATH}/ui-api/appsettings.json
       target: /appsettings.json
       read_only: true
     environment:
@@ -143,10 +134,10 @@ services:
     - |
       if [ -f /appsettings.json ]; then
         echo "Configuration file found."
-        #cp /appsettings.json /etc/saltworks/saltminer-3.0.0/ui-api/appsettings.json
+        #cp /appsettings.json ${INSTALL_PATH}/ui-api/appsettings.json
         /scripts/config-ui-api.sh
       fi;
-      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/ui-api/Saltworks.SaltMiner.Ui.Api.dll
+      /usr/bin/dotnet /usr/share/saltworks/saltminer/ui-api/Saltworks.SaltMiner.Ui.Api.dll
 
   sm-services:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_SERVICES_IMAGE_VERSION}
@@ -154,28 +145,28 @@ services:
     hostname: services
     volumes:
     - type: bind
-      source: /etc/saltworks/saltminer/agent/SourceConfigs
-      target: /etc/saltworks/saltminer-3.0.0/agent/SourceConfigs
+      source: ${INSTALL_PATH}/agent/SourceConfigs
+      target: ${INSTALL_PATH}/agent/SourceConfigs
     - type: bind
-      source: /etc/saltworks/saltminer/python/Elastic.json
+      source: ${INSTALL_PATH}/python/Elastic.json
       target: /Elastic.json
     - type: bind
-      source: /etc/saltworks/saltminer/python/saltworks.key
-      target: /etc/saltworks/saltminer-2.5.0/saltworks.key
+      source: ${INSTALL_PATH}/python/saltworks.key
+      target: ${INSTALL_PATH}-2.5.0/saltworks.key
     - type: bind
-      source: /etc/saltworks/saltminer/python/Sources
-      target: /etc/saltworks/saltminer-2.5.0/Sources
+      source: ${INSTALL_PATH}/python/Sources
+      target: ${INSTALL_PATH}-2.5.0/Sources
     - type: bind
-      source: /etc/saltworks/saltminer/servicemanager/ServiceManagerSettings.json
-      target: /etc/saltworks/saltminer-3.0.0/servicemanager/ServiceManagerSettings.json
+      source: ${INSTALL_PATH}/servicemanager/ServiceManagerSettings.json
+      target: ${INSTALL_PATH}/servicemanager/ServiceManagerSettings.json
     - type: bind
       source: /usr/share/saltworks/saltminer/python/Custom
       target: /usr/share/saltworks/saltminer-2.5.0/Custom
-    - services-logs:/var/log/saltworks/saltminer-3.0.0
+    - services-logs:/var/log/saltworks/saltminer
     - agent25-logs:/var/log/saltworks/saltminer-2.5.0
     - type: bind
-      source: /etc/saltworks/saltminer/manager/ManagerSettings.json
-      target: /etc/saltworks/saltminer-3.0.0/manager/ManagerSettings.json
+      source: ${INSTALL_PATH}/manager/ManagerSettings.json
+      target: ${INSTALL_PATH}/manager/ManagerSettings.json
     environment:
     - ELASTIC_URL=${ELASTICSEARCH_URL}
     - ELASTIC_PWD=${ELASTIC_PASSWORD}
@@ -198,13 +189,13 @@ services:
     - |
       if [ -f /Elastic.json ]; then
         echo "Python configuration file found."
-        /usr/share/saltworks/saltminer-3.0.0/servicemanager/config-services.sh
+        /usr/share/saltworks/saltminer/servicemanager/config-services.sh
       fi;
       if [ -d /usr/share/saltworks/saltminer-2.5.0/Custom ]; then
         echo 'Python custom directory exists.'
         find /usr/share/saltworks/saltminer-2.5.0/Custom -name '*.sh' | xargs dos2unix
       fi;
-      /usr/bin/dotnet /usr/share/saltworks/saltminer-3.0.0/servicemanager/Saltworks.SaltMiner.ServiceManager.dll
+      /usr/bin/dotnet /usr/share/saltworks/saltminer/servicemanager/Saltworks.SaltMiner.ServiceManager.dll
 
   jobmanager:
     image: ${CONTAINER_REGISTRY}/saltworks/saltminer:${SM_JOBMANAGER_IMAGE_VERSION}
@@ -212,10 +203,10 @@ services:
     hostname: jobmanager
     volumes:
     - type: bind
-      source: /etc/saltworks/saltminer/jobmanager/JobManagerSettings.json
-      target: /etc/saltworks/saltminer-3.0.0/jobmanager/JobManagerSettings.json
-    - ui-files:/usr/share/saltworks/saltminer-3.0.0/ui-files
-    - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0
+      source: ${INSTALL_PATH}/jobmanager/JobManagerSettings.json
+      target: ${INSTALL_PATH}/jobmanager/JobManagerSettings.json
+    - ui-files:/usr/share/saltworks/saltminer/ui-files
+    - jobmanager-logs:/var/log/saltworks/saltminer
     networks:
     - ${CONTAINER_NETWORK}
     restart: "always"
@@ -238,11 +229,11 @@ services:
     restart: on-failure:10
     user: root # note, synthetic browser monitors require this set to `elastic-agent`
     volumes:
-    - services-logs:/var/log/saltworks/saltminer-3.0.0/services
-    - api-logs:/var/log/saltworks/saltminer-3.0.0/api
-    - jobmanager-logs:/var/log/saltworks/saltminer-3.0.0/jobmanager
+    - services-logs:/var/log/saltworks/saltminer/services
+    - api-logs:/var/log/saltworks/saltminer/api
+    - jobmanager-logs:/var/log/saltworks/saltminer/jobmanager
     - agent25-logs:/var/log/saltworks/saltminer-2.5.0
-    - ui-api-logs:/var/log/saltworks/saltminer-3.0.0/ui-api
+    - ui-api-logs:/var/log/saltworks/saltminer/ui-api
     environment:
     - FLEET_ENROLLMENT_TOKEN=${ENROLLMENT_TOKEN}
     - FLEET_ENROLL=1
